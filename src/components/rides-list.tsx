@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
 import { getUserBookings } from "@/lib/services/booking"
 import { format } from "date-fns"
+import { getAreas, getMeetingPointName } from "@/lib/services/area"
 
 interface Ride {
   id: string;
@@ -45,13 +46,13 @@ function RideItem({ booking }: { booking: Booking }) {
             <div className="mt-2 flex items-center gap-2">
               <Circle className="h-4 w-4 fill-green-500 text-green-500" />
               <span className="text-black">
-                {booking.ride.to_giu ? `From Area ID: ${booking.ride.area_id}` : 'From German International University'}
+                {booking.ride.to_giu ? `From ${getMeetingPointName(booking.ride.area_id)}` : 'From German International University'}
               </span>
             </div>
             <div className="mt-1 flex items-center gap-2">
               <Circle className="h-4 w-4 fill-orange-500 text-orange-500" />
               <span className="text-black">
-                {booking.ride.to_giu ? 'To German International University' : `To Area ID: ${booking.ride.area_id}`}
+                {booking.ride.to_giu ? 'To German International University' : `To ${getMeetingPointName(booking.ride.area_id)}`}
               </span>
             </div>
           </div>
@@ -77,12 +78,17 @@ export function RidesList() {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
+        // First fetch areas to populate the cache
+        await getAreas();
+        
+        // Then fetch bookings
         const data = await getUserBookings()
         //ignore rides that are null or cancelled
         const filteredData = data.filter((booking) => 
           booking.ride !== null && 
           booking.status !== 'CANCELLED'
         )
+        console.log(filteredData)
         setBookings(filteredData)
       } catch (error) {
         console.error('Error loading bookings:', error)

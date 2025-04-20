@@ -70,4 +70,21 @@ export const GET_BOOKINGS = gql`
       }
     }
   }
+`;
+
+export const GET_AREAS = gql`
+  query GetAreas {
+    getAreas {
+      id
+      name
+      isActive
+      meetingPoints {
+        id
+        name
+        longitude
+        latitude
+        isActive
+      }
+    }
+  }
 `; 
