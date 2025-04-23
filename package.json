@@ -21,12 +21,9 @@
     "@types/js-cookie": "^3.0.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-<<<<<<< HEAD
     "date-fns": "^4.1.0",
     "framer-motion": "^10.16.4",
     "graphql": "^16.10.0",
-=======
->>>>>>> dc5381f17de1d64a11dfce42cb85176fbdca81c0
     "js-cookie": "^3.0.5",
     "lucide-react": "^0.503.0",
     "next": "15.3.0",
