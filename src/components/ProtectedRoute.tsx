@@ -21,7 +21,7 @@ export default function ProtectedRoute({
 
   useEffect(() => {
     // Check if token exists in cookies
-    const token = Cookies.get('token');
+    const token = Cookies.get('accessToken');
     
     if (!loading) {
       if (!isAuthenticated || !token) {

@@ -6,7 +6,7 @@ import Cookies from 'js-cookie';
 const createAuthLink = () => {
   return setContext((_, { headers }) => {
     // Get the authentication token from cookies
-    const token = Cookies.get('token');
+    const token = Cookies.get('accessToken');
     
     // Return the headers to the context so httpLink can read them
     return {
@@ -20,7 +20,7 @@ const createAuthLink = () => {
 
 // Create client for rides service
 const ridesHttpLink = createHttpLink({
-  uri: process.env.NEXT_PUBLIC_RIDES_URI || 'http://localhost:4000/graphql',
+  uri: process.env.NEXT_PUBLIC_RIDES_URI || 'http://localhost:4000/',
 });
 
 const ridesClient = new ApolloClient({
