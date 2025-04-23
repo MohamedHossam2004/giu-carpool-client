@@ -18,18 +18,19 @@ const geistMono = Geist_Mono({
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={inter.className}> <div className="flex h-screen">>
         <ApolloProvider client={userClient}>
-          <AuthProvider>
-            {children}
+          <Sidebar /    <AuthProvider>
+              <main className="flex-1 overflow-auto">{children}</main>
+        </div>
           </AuthProvider>
         </ApolloProvider>
       </body>
     </html>
-  );
+  )
 }
