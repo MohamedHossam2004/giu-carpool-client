@@ -100,32 +100,46 @@ const CreateRideMap: React.FC<CreateRideMapProps> = ({
   }, [selectedAreaId]);
 
   useEffect(() => {
-    if (meetingPoints.length > 0 && selectedMeetingPointIds.length > 0) {
-      const selectedPoints = meetingPoints.filter(point => 
-        selectedMeetingPointIds.includes(point.id.toString())
-      );
-      
-      if (selectedPoints.length > 0) {
-        // Create coordinates string with all selected points
-        let coordinates = '';
-        
-        if (toGIU) {
-          // To GIU: meeting points -> GIU
-          coordinates = selectedPoints
-            .map(point => `${point.longitude},${point.latitude}`)
-            .join(';') + `;${giuCoordinates[1]},${giuCoordinates[0]}`;
-        } else {
-          // From GIU: GIU -> meeting points
-          coordinates = `${giuCoordinates[1]},${giuCoordinates[0]};` + 
-            selectedPoints
-              .map(point => `${point.longitude},${point.latitude}`)
-              .join(';');
-        }
-        
-        fetchRoute(coordinates);
-      } else {
-        setRoute(null);
-      }
+    // Clear route if no meeting points are selected
+    if (!meetingPoints.length || !selectedMeetingPointIds.length) {
+      setRoute(null);
+      return;
+    }
+
+    // Find the selected points from the available meeting points
+    const selectedPoints = meetingPoints.filter(point => 
+      selectedMeetingPointIds.includes(point.id.toString())
+    );
+    
+    if (!selectedPoints.length) {
+      setRoute(null);
+      return;
+    }
+    
+    // Create coordinates string with all selected points in the order they were selected
+    let coordinates = '';
+    
+    // Sort the selected points based on their order in selectedMeetingPointIds
+    const orderedPoints = [...selectedPoints].sort((a, b) => {
+      return selectedMeetingPointIds.indexOf(a.id.toString()) - selectedMeetingPointIds.indexOf(b.id.toString());
+    });
+    
+    if (toGIU) {
+      // To GIU: meeting points -> GIU (in the order selected)
+      coordinates = orderedPoints
+        .map(point => `${point.longitude},${point.latitude}`)
+        .join(';') + `;${giuCoordinates[1]},${giuCoordinates[0]}`;
+    } else {
+      // From GIU: GIU -> meeting points (in the order selected)
+      coordinates = `${giuCoordinates[1]},${giuCoordinates[0]};` + 
+        orderedPoints
+          .map(point => `${point.longitude},${point.latitude}`)
+          .join(';');
+    }
+    
+    // Only fetch route if we have valid coordinates
+    if (coordinates.includes(';')) {
+      fetchRoute(coordinates);
     } else {
       setRoute(null);
     }
@@ -274,4 +288,4 @@ const CreateRideMap: React.FC<CreateRideMapProps> = ({
   );
 };
 
-export default CreateRideMap; 
+export default CreateRideMap;

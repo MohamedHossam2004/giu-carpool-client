@@ -2,29 +2,65 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useQuery, gql } from "@apollo/client"
+import { useQuery, useMutation, gql } from "@apollo/client"
+import { ridesClient } from "@/lib/apollo-client"
 import { Navbar } from "@/components/navbar"
 import { Sidebar } from "@/components/sidebar"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
+import { AlertCircle, ArrowLeft, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import CreateRideMap from "./CreateRideMap"
-import { AlertCircle } from "lucide-react"
 import Cookies from 'js-cookie'
-import { Area } from "../../types/area"
 import { ME_QUERY } from "@/lib/graphql/queries"
+import { Area, MeetingPoint } from "@/types/area"
+import CreateRideMap from "./CreateRideMap"
+import { ProgressBar } from "@/components/ride-creation/ProgressBar"
+import { RideDetailsForm } from "@/components/ride-creation/RideDetailsForm"
+import { PricingForm } from "@/components/ride-creation/PricingForm"
+import { VerificationForm } from "@/components/ride-creation/VerificationForm"
+
+// Create Ride Mutation
+const CREATE_RIDE_MUTATION = gql`
+  mutation CreateRide(
+    $areaId: Int!, 
+    $driverId: Int!,
+    $pricing: [PricingInput!]!, 
+    $toGIU: Boolean!, 
+    $girlsOnly: Boolean!,
+    $departureTime: String!
+  ) {
+    createRide(
+      areaId: $areaId, 
+      driverId: $driverId,
+      pricing: $pricing, 
+      toGIU: $toGIU, 
+      girlsOnly: $girlsOnly,
+      departureTime: $departureTime
+    ) {
+      id
+    }
+  }
+`
+
+interface PricingInput {
+  meetingPointId: number
+  price: number
+}
 
 export default function CreateRidePage() {
   const router = useRouter();
-  const [toGIU, setToGIU] = useState(true)
-  const [girlsOnly, setGirlsOnly] = useState(false)
-  const [selectedAreaId, setSelectedAreaId] = useState<string>("")
-  const [selectedMeetingPointIds, setSelectedMeetingPointIds] = useState<string[]>([])
-  const [areas, setAreas] = useState<Area[]>([])
-  const [selectedArea, setSelectedArea] = useState<Area | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [toGIU, setToGIU] = useState(true);
+  const [girlsOnly, setGirlsOnly] = useState(false);
+  const [selectedAreaId, setSelectedAreaId] = useState<string>("");
+  const [selectedMeetingPointIds, setSelectedMeetingPointIds] = useState<string[]>([]);
+  const [areas, setAreas] = useState<Area[]>([]);
+  const [selectedArea, setSelectedArea] = useState<Area | null>(null);
+  const [availableMeetingPoints, setAvailableMeetingPoints] = useState<MeetingPoint[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentStep, setCurrentStep] = useState<'details' | 'pricing' | 'verification'>('details');
+  const [meetingPointPrices, setMeetingPointPrices] = useState<{ [key: string]: number }>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [departureTime, setDepartureTime] = useState<string>("");
 
   const accessToken = Cookies.get('accessToken');
   const { data, loading: authLoading, error: authError } = useQuery(ME_QUERY, {
@@ -35,21 +71,13 @@ export default function CreateRidePage() {
     }
   });
 
-  console.log("Access Token:", accessToken);
-
-  // !!!!there is error here when i print (i cant fix it because i dont know what is the error)
-  console.log("Auth Error:", authError);
-
   useEffect(() => {
-    // add || authError in the condition when it is fixed  
-    if (!accessToken) {
+    if (!accessToken || authError) {
       router.push('/login');
       return;
     }
-  
     fetchAreas();
   }, [data, authError, router, accessToken]);
-
 
   const fetchAreas = async () => {
     setLoading(true);
@@ -59,7 +87,7 @@ export default function CreateRidePage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`
+          Authorization: `Bearer ${accessToken}`
         },
         body: JSON.stringify({
           query: `
@@ -82,24 +110,12 @@ export default function CreateRidePage() {
       });
 
       const result = await response.json();
-      console.log('GraphQL Response:', result);
-
-      if (!response.ok) {
-        throw new Error(result.errors ? result.errors[0].message : response.statusText);
-      }
-
-      if (result.errors) {
-        throw new Error(result.errors[0].message);
-      }
-
-      if (!result.data || !result.data.getAreas) {
-        throw new Error('No areas data received');
+      if (!response.ok || result.errors || !result.data?.getAreas) {
+        throw new Error(result.errors?.[0]?.message || 'Failed to fetch areas');
       }
 
       setAreas(result.data.getAreas);
     } catch (error) {
-      console.error('Error fetching areas:', error);
-      console.log('Access Token used:', accessToken);
       setError(error instanceof Error ? error.message : 'An error occurred while fetching areas');
     } finally {
       setLoading(false);
@@ -108,19 +124,121 @@ export default function CreateRidePage() {
 
   const handleAreaChange = (areaId: string) => {
     setSelectedAreaId(areaId);
-    const area = areas.find(a => a.id === areaId);
-    setSelectedArea(area || null);
-    setSelectedMeetingPointIds([]); // Reset meeting point selection
+    const area = areas.find(a => a.id === areaId) || null;
+    setSelectedArea(area);
+    setSelectedMeetingPointIds([]);
+    setAvailableMeetingPoints(area?.meetingPoints.filter(p => p.isActive) || []);
   };
 
-  const handleMeetingPointToggle = (pointId: string) => {
-    setSelectedMeetingPointIds(prev => {
-      if (prev.includes(pointId)) {
-        return prev.filter(id => id !== pointId);
-      } else {
-        return [...prev, pointId];
+  const handleMeetingPointSelect = (index: number, pointId: string) => {
+    const newSelectedPoints = [...selectedMeetingPointIds];
+    newSelectedPoints.splice(index, newSelectedPoints.length - index, pointId);
+    setSelectedMeetingPointIds(newSelectedPoints);
+  };
+
+  const handleRemoveMeetingPoint = (index: number) => {
+    const newSelectedPoints = [...selectedMeetingPointIds];
+    newSelectedPoints.splice(index, 1);
+    setSelectedMeetingPointIds(newSelectedPoints);
+  };
+
+  const getRemainingMeetingPoints = (index: number) => {
+    if (!selectedArea) return [];
+    return availableMeetingPoints.filter(point =>
+      !selectedMeetingPointIds.slice(0, index).includes(point.id.toString())
+    );
+  };
+
+  const handleContinueToPrice = () => {
+    if (selectedMeetingPointIds.length > 0) {
+      const initialPrices = { ...meetingPointPrices };
+      selectedMeetingPointIds.forEach((id) => {
+        if (!initialPrices[id]) initialPrices[id] = 0;
+      });
+      setMeetingPointPrices(initialPrices);
+      setCurrentStep('pricing');
+    }
+  };
+
+  const handlePriceChange = (pointId: string, price: number) => {
+    setMeetingPointPrices((prev) => ({
+      ...prev,
+      [pointId]: price,
+    }));
+  };
+
+  const [createRide, { loading: createRideLoading }] = useMutation(CREATE_RIDE_MUTATION, {
+    client: ridesClient,
+    context: {
+      headers: {
+        authorization: `Bearer ${accessToken}`
       }
-    });
+    },
+    onCompleted: (data) => {
+      if (data?.createRide?.id) {
+        console.log('Ride created successfully with ID:', data.createRide.id);
+        setSuccess(true);
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 2000);
+      } else {
+        setError('Failed to create ride');
+        setIsSubmitting(false);
+      }
+    },
+    onError: (error) => {
+      console.error('Error in createRide mutation:', error);
+      setError(error.message || 'An error occurred while creating the ride');
+      setIsSubmitting(false);
+    }
+  });
+
+  const handleContinueToVerification = () => {
+    setCurrentStep('verification');
+  };
+
+  const handleCreateRide = async () => {
+    try {
+      setIsSubmitting(true);
+      setError(null);
+      
+      // Get current user ID from data
+      const driverId = data?.me?.id;
+      
+      if (!driverId) {
+        throw new Error('User ID not found. Please try logging in again.');
+      }
+      
+      console.log('Creating ride with params:', {
+        areaId: parseInt(selectedAreaId),
+        driverId: parseInt(driverId),
+        pricing: selectedMeetingPointIds.map((id) => ({
+          meetingPointId: parseInt(id),
+          price: meetingPointPrices[id] || 0,
+        })),
+        toGIU,
+        girlsOnly,
+        departureTime
+      });
+      
+      await createRide({
+        variables: {
+          areaId: parseInt(selectedAreaId),
+          driverId: parseInt(driverId),
+          pricing: selectedMeetingPointIds.map((id) => ({
+            meetingPointId: parseInt(id),
+            price: meetingPointPrices[id] || 0,
+          })),
+          toGIU,
+          girlsOnly,
+          departureTime,
+        }
+      });
+    } catch (error) {
+      console.error('Error creating ride:', error);
+      setError(error instanceof Error ? error.message : 'An error occurred while creating the ride');
+      setIsSubmitting(false);
+    }
   };
 
   if (loading || authLoading) {
@@ -130,7 +248,7 @@ export default function CreateRidePage() {
         <div className="flex-1 flex flex-col">
           <Navbar />
           <main className="flex-1 flex items-center justify-center">
-            <div className="h-8 w-8 rounded-full bg-blue-500 animate-ping"></div>
+            <div className="h-8 w-8 rounded-full bg-blue-500 animate-ping" />
           </main>
         </div>
       </div>
@@ -142,95 +260,108 @@ export default function CreateRidePage() {
       <Sidebar />
       <div className="flex-1 flex flex-col">
         <Navbar />
-
         <main className="flex-1 flex">
-          <div className="w-[450px] p-6 border-r overflow-y-auto">
-            <h1 className="text-2xl font-bold mb-6 text-black">Create Ride</h1>
-            <div className="h-1 w-full bg-primary mb-8"></div>
-
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <h2 className="text-lg font-semibold text-black">Pickup Route:</h2>
-                <Select onValueChange={handleAreaChange}>
-                  <SelectTrigger className="bg-white text-black border-gray-200">
-                    <SelectValue placeholder="Select route" />
-                  </SelectTrigger>
-                  <SelectContent className="text-black bg-white">
-                    {areas.map((area) => (
-                      <SelectItem 
-                        key={area.id} 
-                        value={area.id}
-                        disabled={!area.isActive}
-                      >
-                        {area.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          {currentStep === 'verification' ? (
+            <div className="flex-1 p-6 max-w-3xl mx-auto">
+              <div className="flex items-center gap-2 mb-6">
+                <Button variant="ghost" size="sm" className="p-0 h-8 w-8" onClick={() => setCurrentStep('pricing')}>
+                  <ArrowLeft className="h-5 w-5 text-black" />
+                </Button>
+                <h1 className="text-2xl font-bold text-black">Verify Ride Details</h1>
               </div>
+              
+              <ProgressBar currentStep={currentStep} />
 
-              {selectedArea && (
-                <div className="space-y-2">
-                  <h2 className="text-lg font-semibold text-black">Meeting Points:</h2>
-                  <div className="space-y-2 max-h-60 overflow-y-auto p-2 border rounded-md">
-                    {selectedArea.meetingPoints.map((point) => (
-                      <div key={point.id} className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          id={`point-${point.id}`}
-                          checked={selectedMeetingPointIds.includes(point.id.toString())}
-                          onChange={() => handleMeetingPointToggle(point.id.toString())}
-                          disabled={!point.isActive}
-                          className="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded"
-                        />
-                        <label 
-                          htmlFor={`point-${point.id}`}
-                          className={`text-sm ${!point.isActive ? 'text-gray-400' : 'text-gray-700'}`}
-                        >
-                          {point.name}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
+              {success ? (
+                <div className="mt-8 p-6 bg-green-50 border border-green-200 rounded-lg text-center">
+                  <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+                  <h2 className="text-xl font-semibold text-black mb-2">Ride Created Successfully!</h2>
+                  <p className="text-gray-600 mb-6">Redirecting to dashboard...</p>
                 </div>
+              ) : (
+                <VerificationForm
+                  selectedArea={selectedArea}
+                  selectedMeetingPointIds={selectedMeetingPointIds}
+                  availableMeetingPoints={availableMeetingPoints}
+                  meetingPointPrices={meetingPointPrices}
+                  toGIU={toGIU}
+                  girlsOnly={girlsOnly}
+                  departureTime={departureTime}
+                  onBack={() => setCurrentStep('pricing')}
+                  onSubmit={handleCreateRide}
+                />
               )}
 
-              <div className="space-y-4 pt-4 bg-white text-black">
-                <div className="flex items-center justify-between bg-white text-black">
-                  <Label htmlFor="to-giu" className="font-medium bg-white text-black">
-                    To GIU
-                  </Label>
-                  <Switch id="to-giu" checked={toGIU} onCheckedChange={setToGIU} className="bg-gray-300"/>
+              {error && (
+                <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded flex items-center">
+                  <AlertCircle className="h-4 w-4 mr-2" />
+                  <span>{error}</span>
                 </div>
-
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="girls-only" className="font-medium">
-                    Girls Only
-                  </Label>
-                  <Switch id="girls-only" checked={girlsOnly} onCheckedChange={setGirlsOnly} className="bg-gray-300"/>
-                </div>
-              </div>
-
-              <Button className="w-full bg-orange-500 hover:bg-orange-600 mt-6">Continue</Button>
+              )}
             </div>
+          ) : (
+            <>
+              <div className="w-[450px] p-6 border-r overflow-y-auto">
+                <div className="flex items-center gap-2 mb-6">
+                  {currentStep === 'pricing' && (
+                    <Button variant="ghost" size="sm" className="p-0 h-8 w-8" onClick={() => setCurrentStep('details')}>
+                      <ArrowLeft className="h-5 w-5 text-black" />
+                    </Button>
+                  )}
+                  <h1 className="text-2xl font-bold text-black">
+                    {currentStep === 'details' ? 'Create Ride' : 'Set Pricing'}
+                  </h1>
+                </div>
+                
+                <ProgressBar currentStep={currentStep} />
 
-            {error && (
-              <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded flex items-center">
-                <AlertCircle className="h-4 w-4 mr-2" />
-                <span>{error}</span>
+                <div className="space-y-6">
+                  {currentStep === 'details' ? (
+                    <RideDetailsForm 
+                      areas={areas}
+                      selectedAreaId={selectedAreaId}
+                      selectedArea={selectedArea}
+                      selectedMeetingPointIds={selectedMeetingPointIds}
+                      availableMeetingPoints={availableMeetingPoints}
+                      toGIU={toGIU}
+                      girlsOnly={girlsOnly}
+                      onAreaChange={handleAreaChange}
+                      onMeetingPointSelect={handleMeetingPointSelect}
+                      onMeetingPointRemove={handleRemoveMeetingPoint}
+                      getRemainingMeetingPoints={getRemainingMeetingPoints}
+                      onToGIUChange={setToGIU}
+                      onGirlsOnlyChange={setGirlsOnly}
+                      onContinue={handleContinueToPrice}
+                      departureTime={departureTime}
+                      onDepartureTimeChange={setDepartureTime}
+                    />
+                  ) : (
+                    <PricingForm 
+                      selectedMeetingPointIds={selectedMeetingPointIds}
+                      availableMeetingPoints={availableMeetingPoints}
+                      meetingPointPrices={meetingPointPrices}
+                      onPriceChange={handlePriceChange}
+                      onBack={() => setCurrentStep('details')}
+                      onSubmit={handleContinueToVerification}
+                    />
+                  )}
+                </div>
+
+                {error && (
+                  <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded flex items-center">
+                    <AlertCircle className="h-4 w-4 mr-2" />
+                    <span>{error}</span>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          <div className="flex-1 relative">
-            <CreateRideMap 
-              selectedAreaId={selectedAreaId} 
-              selectedMeetingPointIds={selectedMeetingPointIds}
-              toGIU={toGIU}
-            />
-          </div>
+              <div className="flex-1 relative">
+                <CreateRideMap selectedAreaId={selectedAreaId} selectedMeetingPointIds={selectedMeetingPointIds} toGIU={toGIU} />
+              </div>
+            </>
+          )}
         </main>
       </div>
     </div>
-  )
-} 
+  );
+}
