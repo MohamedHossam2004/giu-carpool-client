@@ -8,8 +8,11 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import { useRouter } from "next/navigation"
 
 export default function FindRideForm() {
+  const router = useRouter();
+  
   const [formData, setFormData] = useState({
     from: "",
     to: "",
@@ -23,11 +26,15 @@ export default function FindRideForm() {
     girlsOnly: false,
   })
 
+  const goToResults = () => {
+    router.push(`/ride-results?girlsOnly=${formData.girlsOnly}`)
+  }
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
-
+  
   const handleSeatChange = (seat: string, checked: boolean) => {
     setFormData((prev) => ({
       ...prev,
@@ -50,7 +57,7 @@ export default function FindRideForm() {
 
   return (
     <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-24 w-full">
         <div>
           <h1 className="text-4xl font-bold mb-5">Find a ride</h1>
           <p className="text-gray-600 mb-5 text-lg">Where are you going?</p>
@@ -163,6 +170,7 @@ export default function FindRideForm() {
         <Button
           type="submit"
           className="bg-orange-400 hover:bg-orange-500 text-white px-14 py-7 rounded-full text-xl font-medium"
+          onClick={goToResults}
         >
           Search
         </Button>
