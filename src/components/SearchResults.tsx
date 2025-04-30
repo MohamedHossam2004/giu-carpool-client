@@ -8,13 +8,19 @@ import { ChevronLeft } from "lucide-react"
 import dynamic from "next/dynamic"
 const Image = dynamic(() => import("next/image"), { ssr: false })
 import { RiderDetailsDialog } from "@/components/rider-details-dialog"
-
+import { useSearchParams } from "next/navigation"
 export default function ResultsPage() {
   const router = useRouter()
-
+  const searchParams = useSearchParams()
   const handleBackClick = () => {
     router.push("/find-ride")
   }
+
+  const from = searchParams.get("from")
+  const to = searchParams.get("to")
+  const date = searchParams.get("date")
+  const time = searchParams.get("time")
+  const girlsOnly = searchParams.get("girlsOnly")
 
   return (
     <div className="flex-1 p-6">
@@ -29,7 +35,7 @@ export default function ResultsPage() {
         <div className="text-sm text-muted-foreground mt-1">
           <p>Filter:</p>
           <p className="ml-4">Date: 24/02/2025</p>
-          <p className="ml-4">Girls-Only Ride: No</p>
+          <p className="ml-4">Girls-Only Ride: {girlsOnly}</p>
         </div>
       </div>
 

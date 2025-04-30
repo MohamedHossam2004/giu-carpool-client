@@ -3,19 +3,21 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
+import { useRouter } from 'next/navigation';
+import DatePicker from 'react-datepicker';
 import { Button } from "@/components/ui/button"
+import 'react-datepicker/dist/react-datepicker.css';
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
-import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { format } from "date-fns"
-import { CalendarIcon, Clock, AlertCircle, ChevronUp, ChevronDown } from "lucide-react"
+import { CalendarIcon, Clock, AlertCircle, ChevronUp, ChevronDown, Calendar, LoaderCircle, ArrowLeftRight } from "lucide-react"
 import { cn } from "@/lib/utils"
+import Link from "next/link";
 
 // Mock data for locations
 const locations = [
-  { id: 1, name: "GIU Campus" },
   { id: 2, name: "New Cairo" },
   { id: 3, name: "Maadi" },
   { id: 4, name: "Nasr City" },
@@ -26,9 +28,9 @@ const locations = [
 ]
 
 export default function FindRideForm() {
+  const [giuIsFrom, setGiuIsFrom] = useState(true)
+  const [otherLocation, setOtherLocation] = useState("")
   const [formData, setFormData] = useState({
-    from: "",
-    to: "",
     date: new Date(),
     time: {
       hours: new Date().getHours(),
@@ -39,29 +41,31 @@ export default function FindRideForm() {
   const [dateOpen, setDateOpen] = useState(false)
   const [timeOpen, setTimeOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const router = useRouter();
 
   // Validate that exactly one location is GIU Campus
   useEffect(() => {
-    if (formData.from && formData.to) {
-      const fromIsGIU = formData.from === "GIU Campus"
-      const toIsGIU = formData.to === "GIU Campus"
-
-      if (fromIsGIU && toIsGIU) {
-        setError("Both locations cannot be GIU Campus")
-      } else if (!fromIsGIU && !toIsGIU) {
-        setError("Either From or To must be GIU Campus")
-      } else {
-        setError(null)
-      }
+    if (!otherLocation) {
+      setError("Please select a location")
+    } else {
+      setError(null)
     }
-  }, [formData.from, formData.to])
+  }, [otherLocation])
 
-  const handleFromChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, from: value }))
+  const handleSearch = async () => {
+    setLoading(true)
+    setTimeout(() => {
+      setLoading(false)
+    }, 3000)
   }
 
-  const handleToChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, to: value }))
+  const handleOtherLocationChange = (value: string) => {
+    setOtherLocation(value)
+  }
+
+  const toggleDirection = () => {
+    setGiuIsFrom((prev) => !prev)
   }
 
   const handleDateChange = (date: Date | undefined) => {
@@ -82,21 +86,21 @@ export default function FindRideForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Validate before submission
-    const fromIsGIU = formData.from === "GIU Campus"
-    const toIsGIU = formData.to === "GIU Campus"
-
-    if (!formData.from || !formData.to) {
-      setError("Please select both From and To locations")
+    if (!otherLocation) {
+      setError("Please select a location")
       return
     }
 
-    if ((fromIsGIU && toIsGIU) || (!fromIsGIU && !toIsGIU)) {
-      // Error is already set by useEffect
-      return
+    // Prepare the form data for submission
+    const submissionData = {
+      from: giuIsFrom ? "GIU Campus" : otherLocation,
+      to: giuIsFrom ? otherLocation : "GIU Campus",
+      date: formData.date,
+      time: formData.time,
+      girlsOnly,
     }
 
-    console.log("Form submitted:", { ...formData, girlsOnly })
+    console.log("Form submitted:", submissionData)
     // Handle form submission logic here
   }
 
@@ -115,30 +119,55 @@ export default function FindRideForm() {
           )}
 
           <div className="space-y-6">
-            <div>
-              <Label htmlFor="from" className="block mb-2 text-base">
-                From
-              </Label>
-              <Select value={formData.from} onValueChange={handleFromChange}>
-                <SelectTrigger className="w-full bg-gray-50 text-base py-6">
-                  <SelectValue placeholder="Select starting location" />
-                </SelectTrigger>
-                <SelectContent>
-                  {locations.map((location) => (
-                    <SelectItem key={location.id} value={location.name}>
-                      {location.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex items-center space-x-4">
+              <div className="flex-1">
+                <Label className="block mb-2 text-base">From</Label>
+                <div
+                  className={cn(
+                    "flex items-center px-4 py-3 h-[60px] rounded-md border border-input",
+                    giuIsFrom ? "bg-orange-50 border-orange-200" : "bg-gray-50",
+                  )}
+                >
+                  <div className="font-medium text-base">
+                    {giuIsFrom ? "GIU Campus" : otherLocation || "Select location"}
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-8">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={toggleDirection}
+                  className="rounded-full h-10 w-10 flex items-center justify-center border-orange-200 hover:bg-orange-50"
+                >
+                  <ArrowLeftRight className="h-5 w-5 text-orange-500" />
+                </Button>
+              </div>
+
+              <div className="flex-1">
+                <Label className="block mb-2 text-base">To</Label>
+                <div
+                  className={cn(
+                    "flex items-center px-4 py-3 h-[60px] rounded-md border border-input",
+                    !giuIsFrom ? "bg-orange-50 border-orange-200" : "bg-gray-50",
+                  )}
+                >
+                  <div className="font-medium text-base">
+                    {!giuIsFrom ? "GIU Campus" : otherLocation || "Select location"}
+                  </div>
+                </div>
+              </div>
             </div>
+
             <div>
-              <Label htmlFor="to" className="block mb-2 text-base">
-                To
+              <Label htmlFor="otherLocation" className="block mb-2 text-base">
+                Other Location
               </Label>
-              <Select value={formData.to} onValueChange={handleToChange}>
-                <SelectTrigger className="w-full bg-gray-50 text-base py-6">
-                  <SelectValue placeholder="Select destination" />
+              <Select value={otherLocation} onValueChange={handleOtherLocationChange}>
+                <SelectTrigger id="otherLocation" className="w-full bg-gray-50 text-base py-6">
+                  <SelectValue placeholder="Select location" />
                 </SelectTrigger>
                 <SelectContent>
                   {locations.map((location) => (
@@ -175,12 +204,12 @@ export default function FindRideForm() {
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <div className="p-3">
-                      <Calendar
-                        mode="single"
+                      <Calendar size={20} />
+                      <DatePicker
                         selected={formData.date}
-                        onSelect={handleDateChange}
-                        initialFocus
-                        className="rounded-md border"
+                        onChange={(date) => handleDateChange(date as Date)}
+                        dateFormat="yyyy-MM-dd"
+                        className="border p-2 rounded"
                       />
                       <div className="mt-4 flex justify-end">
                         <Button onClick={() => setDateOpen(false)}>Done</Button>
@@ -336,13 +365,33 @@ export default function FindRideForm() {
       </div>
 
       <div className="mt-14 flex justify-center">
-        <Button
-          type="submit"
-          className="bg-orange-400 hover:bg-orange-500 text-white px-14 py-7 rounded-full text-xl font-medium"
-          disabled={!!error}
-        >
-          Search
-        </Button>
+        {otherLocation ?
+          <Link
+            href={{ pathname: "/ride-results", query: { ...formData, girlsOnly } as any }}
+
+          >
+            <Button
+              type="submit"
+              className="bg-orange-400 hover:bg-orange-500 text-white px-14 py-7 rounded-full text-xl font-medium"
+              disabled={!!error}
+              onClick={handleSearch}
+            >
+              {loading ? (
+                <LoaderCircle className="animate-spin" size={20} />
+              ) : (
+                'Search'
+              )}
+            </Button>
+          </Link>
+          :
+          <Button
+            type="submit"
+            className="bg-orange-400 hover:bg-orange-500 text-white px-14 py-7 rounded-full text-xl font-medium"
+            disabled={true}
+          >
+            Search
+          </Button>
+        }
       </div>
     </form>
   )
