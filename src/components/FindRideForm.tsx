@@ -2,84 +2,152 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
-import { useRouter } from "next/navigation"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { format } from "date-fns"
+import { CalendarIcon, Clock, AlertCircle, ChevronUp, ChevronDown } from "lucide-react"
+import { cn } from "@/lib/utils"
+
+// Mock data for locations
+const locations = [
+  { id: 1, name: "GIU Campus" },
+  { id: 2, name: "New Cairo" },
+  { id: 3, name: "Maadi" },
+  { id: 4, name: "Nasr City" },
+  { id: 5, name: "Downtown" },
+  { id: 6, name: "6th of October" },
+  { id: 7, name: "Sheikh Zayed" },
+  { id: 8, name: "Heliopolis" },
+]
 
 export default function FindRideForm() {
-  const router = useRouter();
-  
   const [formData, setFormData] = useState({
     from: "",
     to: "",
-    dateTime: "Today, 5:30 PM",
-    seats: {
-      frontSeat: false,
-      backLeft: false,
-      backRight: false,
-      backMiddle: false,
+    date: new Date(),
+    time: {
+      hours: new Date().getHours(),
+      minutes: new Date().getMinutes(),
     },
-    girlsOnly: false,
   })
+  const [girlsOnly, setGirlsOnly] = useState(false)
+  const [dateOpen, setDateOpen] = useState(false)
+  const [timeOpen, setTimeOpen] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const goToResults = () => {
-    router.push(`/ride-results?girlsOnly=${formData.girlsOnly}`)
+  // Validate that exactly one location is GIU Campus
+  useEffect(() => {
+    if (formData.from && formData.to) {
+      const fromIsGIU = formData.from === "GIU Campus"
+      const toIsGIU = formData.to === "GIU Campus"
+
+      if (fromIsGIU && toIsGIU) {
+        setError("Both locations cannot be GIU Campus")
+      } else if (!fromIsGIU && !toIsGIU) {
+        setError("Either From or To must be GIU Campus")
+      } else {
+        setError(null)
+      }
+    }
+  }, [formData.from, formData.to])
+
+  const handleFromChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, from: value }))
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+  const handleToChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, to: value }))
   }
-  
-  const handleSeatChange = (seat: string, checked: boolean) => {
+
+  const handleDateChange = (date: Date | undefined) => {
+    if (date) {
+      setFormData((prev) => ({ ...prev, date }))
+      // Don't close the popover automatically
+    }
+  }
+
+  const handleTimeChange = (hours: number, minutes: number) => {
     setFormData((prev) => ({
       ...prev,
-      seats: {
-        ...prev.seats,
-        [seat]: checked,
-      },
+      time: { hours, minutes },
     }))
-  }
-
-  const handleGirlsOnlyChange = (checked: boolean) => {
-    setFormData((prev) => ({ ...prev, girlsOnly: checked }))
+    // Don't close the popover automatically
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Form submitted:", formData)
+
+    // Validate before submission
+    const fromIsGIU = formData.from === "GIU Campus"
+    const toIsGIU = formData.to === "GIU Campus"
+
+    if (!formData.from || !formData.to) {
+      setError("Please select both From and To locations")
+      return
+    }
+
+    if ((fromIsGIU && toIsGIU) || (!fromIsGIU && !toIsGIU)) {
+      // Error is already set by useEffect
+      return
+    }
+
+    console.log("Form submitted:", { ...formData, girlsOnly })
     // Handle form submission logic here
   }
 
   return (
     <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-24 w-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
           <h1 className="text-4xl font-bold mb-5">Find a ride</h1>
           <p className="text-gray-600 mb-5 text-lg">Where are you going?</p>
 
-          <div className="space-y-4">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4 flex items-start">
+              <AlertCircle className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <div className="space-y-6">
             <div>
-              <Input
-                name="from"
-                placeholder="From"
-                value={formData.from}
-                onChange={handleInputChange}
-                className="bg-gray-50 text-base py-3"
-              />
+              <Label htmlFor="from" className="block mb-2 text-base">
+                From
+              </Label>
+              <Select value={formData.from} onValueChange={handleFromChange}>
+                <SelectTrigger className="w-full bg-gray-50 text-base py-6">
+                  <SelectValue placeholder="Select starting location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {locations.map((location) => (
+                    <SelectItem key={location.id} value={location.name}>
+                      {location.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <Input
-                name="to"
-                placeholder="To"
-                value={formData.to}
-                onChange={handleInputChange}
-                className="bg-gray-50 text-base py-3"
-              />
+              <Label htmlFor="to" className="block mb-2 text-base">
+                To
+              </Label>
+              <Select value={formData.to} onValueChange={handleToChange}>
+                <SelectTrigger className="w-full bg-gray-50 text-base py-6">
+                  <SelectValue placeholder="Select destination" />
+                </SelectTrigger>
+                <SelectContent>
+                  {locations.map((location) => (
+                    <SelectItem key={location.id} value={location.name}>
+                      {location.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -89,68 +157,169 @@ export default function FindRideForm() {
               <br />
               and Time?
             </h2>
-            <Input
-              name="dateTime"
-              value={formData.dateTime}
-              onChange={handleInputChange}
-              className="bg-gray-50 text-base py-3"
-            />
+            <div className="space-y-6">
+              <div>
+                <Label htmlFor="date" className="block mb-2 text-base">
+                  Date
+                </Label>
+                <Popover open={dateOpen} onOpenChange={setDateOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="date"
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal bg-gray-50 text-base py-6 h-auto"
+                    >
+                      <CalendarIcon className="mr-2 h-5 w-5" />
+                      {format(formData.date, "PPP")}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <div className="p-3">
+                      <Calendar
+                        mode="single"
+                        selected={formData.date}
+                        onSelect={handleDateChange}
+                        initialFocus
+                        className="rounded-md border"
+                      />
+                      <div className="mt-4 flex justify-end">
+                        <Button onClick={() => setDateOpen(false)}>Done</Button>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div>
+                <Label htmlFor="time" className="block mb-2 text-base">
+                  Time
+                </Label>
+                <Popover open={timeOpen} onOpenChange={setTimeOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="time"
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal bg-gray-50 text-base py-6 h-auto"
+                    >
+                      <Clock className="mr-2 h-5 w-5" />
+                      {format(new Date().setHours(formData.time.hours, formData.time.minutes), "h:mm a")}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-4" align="start">
+                    <div className="flex flex-col space-y-6">
+                      <div className="grid grid-cols-3 gap-6 items-center">
+                        {/* Hours */}
+                        <div className="flex flex-col items-center">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              const newHours = formData.time.hours >= 23 ? 0 : formData.time.hours + 1
+                              handleTimeChange(newHours, formData.time.minutes)
+                            }}
+                            className="rounded-full w-8 h-8"
+                          >
+                            <ChevronUp className="h-4 w-4" />
+                          </Button>
+                          <div className="h-12 flex items-center justify-center text-xl my-2">
+                            {String(formData.time.hours).padStart(2, "0")}
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              const newHours = formData.time.hours <= 0 ? 23 : formData.time.hours - 1
+                              handleTimeChange(newHours, formData.time.minutes)
+                            }}
+                            className="rounded-full w-8 h-8"
+                          >
+                            <ChevronDown className="h-4 w-4" />
+                          </Button>
+                          <span className="text-xs mt-1">Hours</span>
+                        </div>
+
+                        <div className="text-center text-2xl font-bold">:</div>
+
+                        {/* Minutes */}
+                        <div className="flex flex-col items-center">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              const newMinutes = formData.time.minutes >= 59 ? 0 : formData.time.minutes + 1
+                              handleTimeChange(formData.time.hours, newMinutes)
+                            }}
+                            className="rounded-full w-8 h-8"
+                          >
+                            <ChevronUp className="h-4 w-4" />
+                          </Button>
+                          <div className="h-12 flex items-center justify-center text-xl my-2">
+                            {String(formData.time.minutes).padStart(2, "0")}
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              const newMinutes = formData.time.minutes <= 0 ? 59 : formData.time.minutes - 1
+                              handleTimeChange(formData.time.hours, newMinutes)
+                            }}
+                            className="rounded-full w-8 h-8"
+                          >
+                            <ChevronDown className="h-4 w-4" />
+                          </Button>
+                          <span className="text-xs mt-1">Minutes</span>
+                        </div>
+                      </div>
+
+                      {/* AM/PM Toggle */}
+                      <div className="flex justify-center">
+                        <div className="flex rounded-md overflow-hidden">
+                          <Button
+                            type="button"
+                            variant={formData.time.hours < 12 ? "default" : "outline"}
+                            onClick={() => {
+                              if (formData.time.hours >= 12) {
+                                handleTimeChange(formData.time.hours - 12, formData.time.minutes)
+                              }
+                            }}
+                            className={cn(
+                              "rounded-none rounded-l-md",
+                              formData.time.hours < 12 ? "bg-orange-400 hover:bg-orange-500" : "",
+                            )}
+                          >
+                            AM
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={formData.time.hours >= 12 ? "default" : "outline"}
+                            onClick={() => {
+                              if (formData.time.hours < 12) {
+                                handleTimeChange(formData.time.hours + 12, formData.time.minutes)
+                              }
+                            }}
+                            className={cn(
+                              "rounded-none rounded-r-md",
+                              formData.time.hours >= 12 ? "bg-orange-400 hover:bg-orange-500" : "",
+                            )}
+                          >
+                            PM
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end">
+                        <Button onClick={() => setTimeOpen(false)}>Done</Button>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
           </div>
         </div>
 
         <div>
-          <h2 className="text-4xl font-bold mb-5">Choose your seat ?</h2>
-          <p className="text-gray-600 mb-5 text-lg">Which seat would you prefer?</p>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="frontSeat" className="font-normal text-base">
-                Front Seat
-              </Label>
-              <Checkbox
-                id="frontSeat"
-                checked={formData.seats.frontSeat}
-                onCheckedChange={(checked) => handleSeatChange("frontSeat", checked as boolean)}
-                className="h-5 w-5"
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <Label htmlFor="backLeft" className="font-normal text-base">
-                Back Left
-              </Label>
-              <Checkbox
-                id="backLeft"
-                checked={formData.seats.backLeft}
-                onCheckedChange={(checked) => handleSeatChange("backLeft", checked as boolean)}
-                className="h-5 w-5"
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <Label htmlFor="backRight" className="font-normal text-base">
-                Back Right
-              </Label>
-              <Checkbox
-                id="backRight"
-                checked={formData.seats.backRight}
-                onCheckedChange={(checked) => handleSeatChange("backRight", checked as boolean)}
-                className="h-5 w-5"
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <Label htmlFor="backMiddle" className="font-normal text-base">
-                Back Middle
-              </Label>
-              <Checkbox
-                id="backMiddle"
-                checked={formData.seats.backMiddle}
-                onCheckedChange={(checked) => handleSeatChange("backMiddle", checked as boolean)}
-                className="h-5 w-5"
-              />
-            </div>
-          </div>
+          <h2 className="text-4xl font-bold mb-5">Ride preferences</h2>
+          <p className="text-gray-600 mb-5 text-lg">Additional options</p>
 
           <div className="mt-10 flex items-center justify-between">
             <Label htmlFor="girlsOnly" className="font-medium text-base">
@@ -158,9 +327,9 @@ export default function FindRideForm() {
             </Label>
             <Switch
               id="girlsOnly"
-              checked={formData.girlsOnly}
-              onCheckedChange={handleGirlsOnlyChange}
-              className="data-[state=checked]:bg-orange-500 h-7 w-14"
+              checked={girlsOnly}
+              onCheckedChange={setGirlsOnly}
+              className="data-[state=checked]:bg-orange-400"
             />
           </div>
         </div>
@@ -170,7 +339,7 @@ export default function FindRideForm() {
         <Button
           type="submit"
           className="bg-orange-400 hover:bg-orange-500 text-white px-14 py-7 rounded-full text-xl font-medium"
-          onClick={goToResults}
+          disabled={!!error}
         >
           Search
         </Button>
