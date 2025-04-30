@@ -4,7 +4,8 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft } from "lucide-react"
-import Image from "next/image"
+import dynamic from "next/dynamic"
+const Image = dynamic(() => import("next/image"), { ssr: false })
 import { useState, useEffect } from "react"
 import { SeatsDialog } from "./seats-dialog"
 import { toast } from "./ui/use-toast"
@@ -96,7 +97,9 @@ export function RideCard({ name, car, departureTime, arrivalTime, avatarSrc }: R
       <CardContent className="p-6 flex items-center gap-4">
         <div className="relative">
           <div className="w-20 h-20 rounded-full overflow-hidden bg-amber-100">
-            <Image src={avatarSrc || "/placeholder.svg"} alt={name} width={80} height={80} className="object-cover" />
+            {typeof window !== 'undefined' && (
+              <Image src={avatarSrc || "/placeholder.svg"} alt={name} width={80} height={80} className="object-cover" />
+            )}
           </div>
         </div>
 
