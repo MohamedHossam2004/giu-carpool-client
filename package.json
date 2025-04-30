@@ -36,6 +36,7 @@
     "js-cookie": "^3.0.5",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.503.0",
+    "mapbox-gl": "^3.11.1",
     "next": "15.3.0",
     "react": "^19.0.0",
     "react-day-picker": "^9.6.7",
