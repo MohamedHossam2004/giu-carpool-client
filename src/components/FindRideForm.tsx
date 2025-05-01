@@ -51,10 +51,7 @@ export default function FindRideForm() {
             `query getAreas { 
               getAreas {
                 id
-                meetingPoints {
-                  id
-                  name
-                }
+                name
               }
             }`
         }),
@@ -64,11 +61,7 @@ export default function FindRideForm() {
 
       const areas = await data.data.getAreas;
 
-      const meetingPoints: any[] = [];
-
-      await areas.forEach((area: any) => { meetingPoints.push(...area.meetingPoints) });
-
-      setLocations(meetingPoints);
+      setLocations(areas);
     }
 
     getLocations();
