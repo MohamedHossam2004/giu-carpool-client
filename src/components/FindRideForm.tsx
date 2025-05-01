@@ -17,15 +17,6 @@ import { cn } from "@/lib/utils"
 import Link from "next/link";
 
 // Mock data for locations
-const locations = [
-  { id: 2, name: "New Cairo" },
-  { id: 3, name: "Maadi" },
-  { id: 4, name: "Nasr City" },
-  { id: 5, name: "Downtown" },
-  { id: 6, name: "6th of October" },
-  { id: 7, name: "Sheikh Zayed" },
-  { id: 8, name: "Heliopolis" },
-]
 
 export default function FindRideForm() {
   const [giuIsFrom, setGiuIsFrom] = useState(true)
@@ -42,9 +33,48 @@ export default function FindRideForm() {
   const [timeOpen, setTimeOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [locations, setLocations] = useState<any[]>([])
+
   const router = useRouter();
 
-  // Validate that exactly one location is GIU Campus
+
+  useEffect(() => {
+
+    const getLocations = async () => {
+      const response = await fetch("http://localhost:4000/graphql", {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query:
+            `query getAreas { 
+              getAreas {
+                id
+                meetingPoints {
+                  id
+                  name
+                }
+              }
+            }`
+        }),
+      })
+
+      const data = await response.json()
+
+      const areas = await data.data.getAreas;
+
+      const meetingPoints: any[] = [];
+
+      await areas.forEach((area: any) => { meetingPoints.push(...area.meetingPoints) });
+
+      setLocations(meetingPoints);
+    }
+
+    getLocations();
+
+  }, [])
+
   useEffect(() => {
     if (!otherLocation) {
       setError("Please select a location")
@@ -83,29 +113,8 @@ export default function FindRideForm() {
     // Don't close the popover automatically
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!otherLocation) {
-      setError("Please select a location")
-      return
-    }
-
-    // Prepare the form data for submission
-    const submissionData = {
-      from: giuIsFrom ? "GIU Campus" : otherLocation,
-      to: giuIsFrom ? otherLocation : "GIU Campus",
-      date: formData.date,
-      time: formData.time,
-      girlsOnly,
-    }
-
-    console.log("Form submitted:", submissionData)
-    // Handle form submission logic here
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
+    <form className="max-w-4xl mx-auto">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
           <h1 className="text-4xl font-bold mb-5">Find a ride</h1>
@@ -170,7 +179,7 @@ export default function FindRideForm() {
                   <SelectValue placeholder="Select location" />
                 </SelectTrigger>
                 <SelectContent>
-                  {locations.map((location) => (
+                  {locations.length > 0 && locations.map((location) => (
                     <SelectItem key={location.id} value={location.name}>
                       {location.name}
                     </SelectItem>
@@ -367,7 +376,7 @@ export default function FindRideForm() {
       <div className="mt-14 flex justify-center">
         {otherLocation ?
           <Link
-            href={{ pathname: "/ride-results", query: { ...formData, girlsOnly } as any }}
+            href={{ pathname: "/ride-results", query: { ...formData, girlsOnly, locations: JSON.stringify(locations) } as any }}
 
           >
             <Button

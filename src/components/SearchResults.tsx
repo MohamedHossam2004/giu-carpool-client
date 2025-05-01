@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -20,7 +20,26 @@ export default function ResultsPage() {
   const to = searchParams.get("to")
   const date = searchParams.get("date")
   const time = searchParams.get("time")
+  //const locations = JSON.parse(searchParams.get("locations") || "[]")
   const girlsOnly = searchParams.get("girlsOnly")
+
+
+  //useEffect(() => {
+  // const getRides = async () => {
+  //   const response = await fetch("http://localhost:4000/graphql", {
+  //     method: "POST",
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //     },
+  //     body: JSON.stringify(
+
+  //     ),
+  //   })
+
+  //   const data = await response.json()
+  //   console.log(data)
+  //}
+  // }, [])
 
   return (
     <div className="flex-1 p-6">
@@ -35,7 +54,7 @@ export default function ResultsPage() {
         <div className="text-sm text-muted-foreground mt-1">
           <p>Filter:</p>
           <p className="ml-4">Date: 24/02/2025</p>
-          <p className="ml-4">Girls-Only Ride: {girlsOnly}</p>
+          <p className="ml-4">Girls-Only Ride: {girlsOnly === "true" ? "Yes" : "No"}</p>
         </div>
       </div>
 
@@ -45,7 +64,7 @@ export default function ResultsPage() {
           name="Jana Hagar"
           car="Nissan Sunny"
           departureTime="3:15 P.M"
-          arrivalTime="5:00 P.M"
+          availableSeats={3}
           avatarSrc="/placeholder.svg?height=80&width=80"
         />
 
@@ -54,7 +73,7 @@ export default function ResultsPage() {
           name="Mariam Ahmed"
           car="Kia Citroën"
           departureTime="9:15 P.M"
-          arrivalTime="10:00 P.M"
+          availableSeats={3}
           avatarSrc="/placeholder.svg?height=80&width=80"
         />
 
@@ -63,7 +82,7 @@ export default function ResultsPage() {
           name="Ahmed Amr"
           car="Fiat Tipo"
           departureTime="1:30 P.M"
-          arrivalTime="3:30 P.M"
+          availableSeats={3}
           avatarSrc="/placeholder.svg?height=80&width=80"
         />
       </div>
@@ -76,11 +95,11 @@ interface RideCardProps {
   name: string
   car: string
   departureTime: string
-  arrivalTime: string
+  availableSeats: number
   avatarSrc: string
 }
 
-function RideCard({ id, name, car, departureTime, arrivalTime, avatarSrc }: RideCardProps) {
+function RideCard({ id, name, car, departureTime, availableSeats, avatarSrc }: RideCardProps) {
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
 
   return (
@@ -98,7 +117,7 @@ function RideCard({ id, name, car, departureTime, arrivalTime, avatarSrc }: Ride
           <h3 className="text-lg font-medium">{name}</h3>
           <p className="text-sm text-muted-foreground">Car: {car}</p>
           <p className="text-sm text-muted-foreground">Departure Time: {departureTime}</p>
-          <p className="text-sm text-muted-foreground">Estimated Arrival Time: {arrivalTime}</p>
+          <p className="text-sm text-muted-foreground">Available Seats: {availableSeats}</p>
 
           <Button
             className="mt-2 bg-amber-500 hover:bg-amber-600 text-white"
@@ -106,6 +125,14 @@ function RideCard({ id, name, car, departureTime, arrivalTime, avatarSrc }: Ride
             onClick={() => setDetailsDialogOpen(true)}
           >
             Rider Details
+          </Button>
+          <Button
+            className="mt-2 bg-amber-500 hover:bg-amber-600 text-white"
+            size="sm"
+            onClick={() => setDetailsDialogOpen(true)}
+            style={{ marginLeft: "10px" }}
+          >
+            Join Ride
           </Button>
 
           <RiderDetailsDialog
