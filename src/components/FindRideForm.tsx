@@ -3,7 +3,6 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { useRouter } from 'next/navigation';
 import DatePicker from 'react-datepicker';
 import { Button } from "@/components/ui/button"
 import 'react-datepicker/dist/react-datepicker.css';
@@ -15,6 +14,7 @@ import { format } from "date-fns"
 import { CalendarIcon, Clock, AlertCircle, ChevronUp, ChevronDown, Calendar, LoaderCircle, ArrowLeftRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link";
+import { toast } from "./ui/use-toast";
 
 // Mock data for locations
 
@@ -34,36 +34,43 @@ export default function FindRideForm() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [locations, setLocations] = useState<any[]>([])
-
-  const router = useRouter();
-
+  const [otherLocationId, setOtherLocationId] = useState<number | null>(null)
 
   useEffect(() => {
 
     const getLocations = async () => {
-      const response = await fetch("http://localhost:4000/graphql", {
-        method: "POST",
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query:
-            `query getAreas { 
+
+      try {
+        const response = await fetch("http://localhost:4000/graphql", {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            query:
+              `query getAreas { 
               getAreas {
                 id
                 name
               }
             }`
-        }),
-      })
+          }),
+        })
 
-      const data = await response.json()
+        const data = await response.json()
 
-      const areas = await data.data.getAreas;
+        const areas = await data.data.getAreas;
 
-      setLocations(areas);
+        setLocations(areas);
+      } catch (error) {
+        console.error("Error fetching Areas:", error)
+        toast({
+          title: "Error",
+          description: "Failed to fetch Areas. Please try again.",
+          variant: "destructive",
+        })
+      }
     }
-
     getLocations();
 
   }, [])
@@ -85,6 +92,7 @@ export default function FindRideForm() {
 
   const handleOtherLocationChange = (value: string) => {
     setOtherLocation(value)
+    setOtherLocationId(locations.find((location) => location.name === value)?.id)
   }
 
   const toggleDirection = () => {
@@ -94,7 +102,6 @@ export default function FindRideForm() {
   const handleDateChange = (date: Date | undefined) => {
     if (date) {
       setFormData((prev) => ({ ...prev, date }))
-      // Don't close the popover automatically
     }
   }
 
@@ -103,7 +110,12 @@ export default function FindRideForm() {
       ...prev,
       time: { hours, minutes },
     }))
-    // Don't close the popover automatically
+  }
+
+  const formatFormData = () => {
+    const combinedDate = new Date(formData.date)
+    combinedDate.setHours(formData.time.hours, formData.time.minutes, 0, 0)
+    return combinedDate.toISOString();
   }
 
   return (
@@ -369,7 +381,7 @@ export default function FindRideForm() {
       <div className="mt-14 flex justify-center">
         {otherLocation ?
           <Link
-            href={{ pathname: "/ride-results", query: { ...formData, girlsOnly, locations: JSON.stringify(locations) } as any }}
+            href={{ pathname: "/ride-results", query: { date: formatFormData(), girlsOnly, otherLocation, otherLocationId, giuIsFrom } }}
 
           >
             <Button
