@@ -1,11 +1,25 @@
 "use client"
 
-import { Clock, Circle } from "lucide-react"
+import { Clock, Circle, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
 import { getUserBookings } from "@/lib/services/booking"
 import { format } from "date-fns"
 import { getAreas, getMeetingPointName } from "@/lib/services/area"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { useToast } from "@/components/ui/use-toast"
+import { createRideReview } from "@/lib/services/review"
+import Cookies from 'js-cookie'
 
 interface Ride {
   id: string;
@@ -28,46 +42,219 @@ interface Booking {
   ride: Ride;
 }
 
+interface ReviewDialogProps {
+  rideId: string;
+  driverId: string;
+  onReviewSubmit: () => void;
+}
+
+function ReviewDialog({ rideId, driverId, onReviewSubmit }: ReviewDialogProps) {
+  const [rating, setRating] = useState(0);
+  const [reviewText, setReviewText] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const token = Cookies.get('accessToken');
+      if (token) {
+        try {
+          const response = await fetch('http://localhost:4000/graphql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ query: 'query Me { me { id } }' })
+          });
+          const result = await response.json();
+          if (result.data?.me?.id) {
+            setUserId(result.data.me.id.toString());
+          } else {
+            console.error("Failed to fetch user ID from token");
+            if (result.errors) console.error("GraphQL Errors:", result.errors);
+          }
+        } catch (error) {
+          console.error("Error fetching user ID:", error);
+        }
+      }
+    };
+    fetchUserId();
+  }, []);
+
+  const handleStarClick = (index: number) => {
+    setRating(index + 1);
+  };
+
+  const handleSubmit = async () => {
+    if (rating === 0) {
+      toast({
+        variant: "destructive",
+        title: "Rating Required",
+        description: "Please select a star rating.",
+      });
+      return;
+    }
+    if (!userId) {
+      toast({
+        variant: "destructive",
+        title: "Authentication Error",
+        description: "Could not verify user. Please log in again.",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await createRideReview({
+        rideId,
+        riderId: userId,
+        rating,
+        review: reviewText || undefined,
+      });
+      toast({
+        title: "Review Submitted",
+        description: "Thank you for your feedback!",
+      });
+      onReviewSubmit();
+    } catch (error: any) {
+      console.error("Failed to submit review:", error);
+      toast({
+        variant: "destructive",
+        title: "Submission Failed",
+        description: error.message || "Could not submit review. Please try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <DialogContent className="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>Leave a Review</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-4 py-4">
+        <div className="space-y-2">
+          <Label htmlFor="rating">Rating</Label>
+          <div className="flex items-center gap-1">
+            {[...Array(5)].map((_, index) => (
+              <Star
+                key={index}
+                className={`h-6 w-6 cursor-pointer ${
+                  index < rating ? "fill-amber-400 text-amber-400" : "text-gray-300"
+                }`}
+                onClick={() => handleStarClick(index)}
+              />
+            ))}
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="reviewText">Review (Optional)</Label>
+          <Textarea
+            id="reviewText"
+            placeholder="Share your experience..."
+            value={reviewText}
+            onChange={(e) => setReviewText(e.target.value)}
+            className="min-h-[100px]"
+          />
+        </div>
+      </div>
+      <DialogFooter>
+        <DialogClose asChild>
+          <Button type="button" variant="outline">Cancel</Button>
+        </DialogClose>
+        <Button type="button" onClick={handleSubmit} disabled={isSubmitting || rating === 0 || !userId}>
+          {isSubmitting ? "Submitting..." : "Submit Review"}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+}
+
 function RideItem({ booking }: { booking: Booking }) {
   const date = new Date(parseInt(booking.ride.departure_time))
   const formattedDate = format(date, 'dd/MM/yyyy, HH:mm')
+  const isCompleted = booking.ride.status?.toUpperCase() === 'COMPLETED';
+  const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
+
+  const handleReviewSubmit = () => {
+    setIsReviewDialogOpen(false);
+  };
+
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
 
   return (
-    <div className="rounded-lg bg-gray-100 p-4">
-      <div className="flex items-start justify-between">
-        <div className="flex items-start gap-3">
-          <div className="mt-1 flex flex-col items-center">
-            <Clock className="h-5 w-5 text-black" />
+    <Dialog open={isReviewDialogOpen} onOpenChange={setIsReviewDialogOpen}>
+      <div className="rounded-lg bg-gray-100 p-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-3">
+            <div className="mt-1 flex flex-col items-center">
+              <Clock className="h-5 w-5 text-black" />
+            </div>
+            <div>
+              <div className="font-medium text-black">
+                {formattedDate}
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <Circle className="h-4 w-4 fill-green-500 text-green-500" />
+                <span className="text-black">
+                  {booking.ride.to_giu ? `From ${getMeetingPointName(booking.ride.area_id)}` : 'From German International University'}
+                </span>
+              </div>
+              <div className="mt-1 flex items-center gap-2">
+                <Circle className="h-4 w-4 fill-orange-500 text-orange-500" />
+                <span className="text-black">
+                  {booking.ride.to_giu ? 'To German International University' : `To ${getMeetingPointName(booking.ride.area_id)}`}
+                </span>
+              </div>
+            </div>
           </div>
-          <div>
-            <div className="font-medium text-black">
-              {formattedDate}
-            </div>
-            <div className="mt-2 flex items-center gap-2">
-              <Circle className="h-4 w-4 fill-green-500 text-green-500" />
-              <span className="text-black">
-                {booking.ride.to_giu ? `From ${getMeetingPointName(booking.ride.area_id)}` : 'From German International University'}
-              </span>
-            </div>
-            <div className="mt-1 flex items-center gap-2">
-              <Circle className="h-4 w-4 fill-orange-500 text-orange-500" />
-              <span className="text-black">
-                {booking.ride.to_giu ? 'To German International University' : `To ${getMeetingPointName(booking.ride.area_id)}`}
-              </span>
-            </div>
+          <div className="flex flex-col items-end gap-2">
+            <div className="font-medium text-black">EGP {booking.price.toFixed(2)}</div>
+            {isCompleted && booking.successful ? (
+              reviewSubmitted ? (
+                <Button
+                  className="bg-gray-400 text-white cursor-not-allowed"
+                  size="sm"
+                  disabled
+                >
+                  Reviewed
+                </Button>
+              ) : (
+                <DialogTrigger asChild>
+                  <Button
+                    className="bg-blue-500 hover:bg-blue-600 text-white"
+                    size="sm"
+                  >
+                    Leave Review
+                  </Button>
+                </DialogTrigger>
+              )
+            ) : (
+              <Button
+                className="bg-orange-500 hover:bg-orange-600 text-black"
+                disabled={!booking.successful}
+                size="sm"
+              >
+                {booking.successful ? 'Reride' : booking.ride.status?.toUpperCase() ?? 'Unknown'}
+              </Button>
+            )}
           </div>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <div className="font-medium text-black">EGP {booking.price.toFixed(2)}</div>
-          <Button 
-            className="bg-orange-500 hover:bg-orange-600 text-black"
-            disabled={!booking.successful}
-          >
-            {booking.successful ? 'Reride' : 'Cancelled'}
-          </Button>
         </div>
       </div>
-    </div>
+      {isCompleted && booking.successful && !reviewSubmitted && (
+        <ReviewDialog
+          rideId={booking.ride_id.toString()}
+          driverId={booking.ride.driver_id.toString()}
+          onReviewSubmit={() => {
+            handleReviewSubmit();
+            setReviewSubmitted(true);
+          }}
+        />
+      )}
+    </Dialog>
   )
 }
 
@@ -78,30 +265,26 @@ export function RidesList() {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        // First fetch areas to populate the cache
         await getAreas();
-        
-        // Then fetch bookings
-        const data = await getUserBookings()
-        //ignore rides that are null or cancelled
-        const filteredData = data.filter((booking) => 
-          booking.ride !== null && 
+        const data = await getUserBookings();
+        const filteredData = data.filter((booking) =>
+          booking.ride !== null &&
           booking.status !== 'CANCELLED'
-        )
-        console.log(filteredData)
-        setBookings(filteredData)
+        );
+        console.log("Filtered Bookings with Status:", filteredData.map(b => ({ id: b.id, ride_status: b.ride?.status })));
+        setBookings(filteredData);
       } catch (error) {
-        console.error('Error loading bookings:', error)
+        console.error('Error loading bookings:', error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchBookings()
-  }, [])
+    fetchBookings();
+  }, []);
 
   if (loading) {
-    return <div className="flex justify-center items-center h-32 text-black">Loading rides...</div>
+    return <div className="flex justify-center items-center h-32 text-black">Loading rides...</div>;
   }
 
   if (bookings.length === 0) {
@@ -110,7 +293,7 @@ export function RidesList() {
         <h2 className="text-3xl font-semibold text-black">My Rides</h2>
         <div className="text-center text-black">No rides found</div>
       </div>
-    )
+    );
   }
 
   return (
@@ -122,5 +305,5 @@ export function RidesList() {
         ))}
       </div>
     </div>
-  )
+  );
 }

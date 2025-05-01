@@ -87,4 +87,25 @@ export const GET_AREAS = gql`
       }
     }
   }
-`; 
+`;
+
+export const CREATE_RIDE_REVIEW = gql`
+  mutation CreateRideReview(
+    $rideId: ID!
+    $riderId: ID!
+    $rating: Int!
+    $review: String
+  ) {
+    createRideReview(
+      rideId: $rideId
+      riderId: $riderId
+      rating: $rating
+      review: $review
+    ) {
+      id
+      rating
+      review
+      createdAt
+    }
+  }
+`;
