@@ -74,3 +74,27 @@
     @apply bg-background text-foreground;
   }
 }
+
+.custom-marker {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #3b82f6;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.custom-marker:hover {
+  transform: scale(1.1);
+}
+
+.custom-marker.active {
+  background-color: #22c55e;
+}
+
+.custom-marker.inactive {
+  background-color: #ef4444;
+  opacity: 0.7;
+}
