@@ -11,9 +11,11 @@ import { RiderDetailsDialog } from "@/components/rider-details-dialog"
 import { MeetingPointsDialog } from "@/components/meeting-points-dialog"
 import { useSearchParams } from "next/navigation"
 import { useToast } from "@/components/ui/use-toast"
+import Cookies from "js-cookie"
 
 interface MeetingPoint {
   meetingPoint: {
+    id: number
     name: string
   }
   price: number
@@ -31,6 +33,7 @@ interface Ride {
 export default function ResultsPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+
   const { toast } = useToast()
 
   const handleBackClick = () => {
@@ -57,6 +60,7 @@ export default function ResultsPage() {
       seatsAvailable
       meetingPoints {
         meetingPoint {
+          id
           name
         }
         price
@@ -164,8 +168,34 @@ function RideCard({ id, name, car, departureTime, availableSeats, avatarSrc, mee
   const [selectedMeetingPoint, setSelectedMeetingPoint] = useState<MeetingPoint | null>(null)
   const { toast } = useToast()
 
-  const handleJoinRide = (meetingPoint: MeetingPoint) => {
+  const searchParams = useSearchParams()
+
+  const query = `mutation CreateBooking($rideId: Int!, $meetingPointId: Int!) {
+                    createBooking(ride_id: $rideId, meeting_point_id: $meetingPointId) {
+                        status
+                }
+              }`
+
+  const handleJoinRide = async (meetingPoint: MeetingPoint) => {
     setSelectedMeetingPoint(meetingPoint)
+    const response = await fetch("http://localhost:4001/graphql", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${Cookies.get("accessToken")}`,
+      },
+      body: JSON.stringify({
+        query,
+        variables: {
+          rideId: Number.parseInt(id),
+          meetingPointId: Number.parseInt(meetingPoint.meetingPoint.id.toString()),
+        },
+      }),
+    })
+
+    const data = await response.json()
+    console.log(data)
+
     toast({
       title: "Ride Joined Successfully!",
       description: `You've joined the ride with meeting point: ${meetingPoint.meetingPoint.name} (${meetingPoint.price} EGP)`,
