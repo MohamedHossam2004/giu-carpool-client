@@ -10,6 +10,7 @@ import { LoaderCircle, MapPin } from "lucide-react"
 interface MeetingPoint {
     meetingPoint: {
         name: string
+        id: number
     }
     price: number
 }

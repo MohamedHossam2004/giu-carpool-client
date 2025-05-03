@@ -15,8 +15,7 @@ import { CalendarIcon, Clock, AlertCircle, ChevronUp, ChevronDown, Calendar, Loa
 import { cn } from "@/lib/utils"
 import Link from "next/link";
 import { toast } from "./ui/use-toast";
-
-// Mock data for locations
+import Cookies from "js-cookie";
 
 export default function FindRideForm() {
   const [giuIsFrom, setGiuIsFrom] = useState(true)
@@ -35,6 +34,7 @@ export default function FindRideForm() {
   const [loading, setLoading] = useState(false)
   const [locations, setLocations] = useState<any[]>([])
   const [otherLocationId, setOtherLocationId] = useState<number | null>(null)
+  const [gender, setGender] = useState<boolean | null>(null)
 
   useEffect(() => {
 
@@ -62,6 +62,30 @@ export default function FindRideForm() {
         const areas = await data.data.getAreas;
 
         setLocations(areas);
+
+        const ME_QUERY = `
+                          query Me {
+                              me {
+                                id
+                                gender
+                              }
+                          }
+                        `;
+
+        const profile = await fetch("http://localhost:4003/graphql", {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Cookies.get("accessToken")}`,
+          },
+          body: JSON.stringify({ query: ME_QUERY }),
+        })
+
+        const profileData = await profile.json()
+
+        setGender(profileData.data.me.gender)
+
+
       } catch (error) {
         console.error("Error fetching Areas:", error)
         toast({
@@ -372,6 +396,7 @@ export default function FindRideForm() {
               id="girlsOnly"
               checked={girlsOnly}
               onCheckedChange={setGirlsOnly}
+              disabled={gender ? gender : false}
               className="data-[state=checked]:bg-orange-400"
             />
           </div>
