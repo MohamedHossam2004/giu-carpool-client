@@ -79,11 +79,6 @@ export default function PaymentSuccessPage() {
                   <hr className="my-3" />
                   <p><strong>Ride ID:</strong> {bookingDetails.ride.id}</p>
                   <p><strong>Direction:</strong> {bookingDetails.ride.to_giu ? 'To GIU' : 'From GIU'}</p>
-                  {/* You might need to fetch Area name based on area_id */}
-                  {/* <p><strong>Area:</strong> {bookingDetails.ride.area_id}</p> */}
-                  <p><strong>Departure:</strong> {format(new Date(bookingDetails.ride.departure_time), 'PPP p')}</p>
-                  {/* You might need to fetch Driver name based on driver_id */}
-                  {/* <p><strong>Driver ID:</strong> {bookingDetails.ride.driver_id}</p> */}
                 </>
               )}
             </div>
