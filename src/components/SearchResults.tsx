@@ -131,6 +131,7 @@ export default function ResultsPage() {
             <RideCard
               key={ride.id}
               id={ride.id}
+              driverId={ride.driverId}
               name={"Driver Name"} // Replace with actual driver name when available
               car={"Car Model"} // Replace with actual car model when available
               departureTime={formatDate(ride.departureTime)}
@@ -157,12 +158,13 @@ interface RideCardProps {
   name: string
   car: string
   departureTime: string
+  driverId: string
   availableSeats: number
   avatarSrc: string
   meetingPoints: MeetingPoint[]
 }
 
-function RideCard({ id, name, car, departureTime, availableSeats, avatarSrc, meetingPoints }: RideCardProps) {
+function RideCard({ id, name, car, departureTime, availableSeats, avatarSrc, meetingPoints, driverId }: RideCardProps) {
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
   const [meetingPointsDialogOpen, setMeetingPointsDialogOpen] = useState(false)
   const [selectedMeetingPoint, setSelectedMeetingPoint] = useState<MeetingPoint | null>(null)
@@ -194,7 +196,6 @@ function RideCard({ id, name, car, departureTime, availableSeats, avatarSrc, mee
     })
 
     const data = await response.json()
-    console.log(data)
 
     toast({
       title: "Ride Joined Successfully!",
@@ -249,7 +250,7 @@ function RideCard({ id, name, car, departureTime, availableSeats, avatarSrc, mee
           <RiderDetailsDialog
             open={detailsDialogOpen}
             onOpenChange={setDetailsDialogOpen}
-            driverId={id}
+            driverId={driverId}
             driverName={name}
             driverAvatar={avatarSrc}
           />

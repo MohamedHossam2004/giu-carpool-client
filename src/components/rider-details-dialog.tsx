@@ -7,15 +7,27 @@ import { X, Star, StarHalf } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 
-// These interfaces match the GraphQL schema
 interface RideReview {
     id: string
-    driverId: string
     riderId: string
     rating: number
     review: string | null
     createdAt: string
 }
+
+const RiderReviewsQuery = `query GetDriverReviews($driverId: ID!, $getDriverAverageRatingDriverId2: ID!) {
+    getDriverReviews(driverId: $driverId) {
+      id
+      riderId
+      review
+      rating
+      createdAt
+    }
+    getDriverAverageRating(driverId: $getDriverAverageRatingDriverId2) {
+      averageRating
+      reviewCount
+    }
+  }`;
 
 interface DriverRating {
     averageRating: number
@@ -33,58 +45,36 @@ interface RiderDetailsDialogProps {
 export function RiderDetailsDialog({
     open,
     onOpenChange,
-    driverId,
     driverName,
     driverAvatar,
+    driverId,
 }: RiderDetailsDialogProps) {
     const [reviews, setReviews] = useState<RideReview[]>([])
     const [rating, setRating] = useState<DriverRating>({ averageRating: 0, reviewCount: 0 })
     const [loading, setLoading] = useState(true)
 
-    // Mock data fetching - in a real app, this would be a GraphQL query
     useEffect(() => {
         if (open) {
-            // Simulate API call delay
-            const timer = setTimeout(() => {
-                // Mock data that matches the schema
-                setRating({
-                    averageRating: 4.7,
-                    reviewCount: 23,
+            const getRiderReviews = async () => {
+                const response = await fetch("http://localhost:4000/graphql", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ query: RiderReviewsQuery, variables: { driverId: driverId, getDriverAverageRatingDriverId2: driverId } }),
                 })
 
-                setReviews([
-                    {
-                        id: "1",
-                        driverId: driverId,
-                        riderId: "101",
-                        rating: 5,
-                        review: "Great driver! Very punctual and friendly.",
-                        createdAt: "2023-04-15T10:30:00Z",
-                    },
-                    {
-                        id: "2",
-                        driverId: driverId,
-                        riderId: "102",
-                        rating: 5,
-                        review: "Always on time and very professional. The car was clean and comfortable.",
-                        createdAt: "2023-03-22T14:15:00Z",
-                    },
-                    {
-                        id: "3",
-                        driverId: driverId,
-                        riderId: "103",
-                        rating: 4,
-                        review: "Good experience overall. Would ride again.",
-                        createdAt: "2023-02-10T09:45:00Z",
-                    },
-                ])
 
+                const data = await response.json()
+
+                setReviews(data.data.getDriverReviews)
+                setRating(data.data.getDriverAverageRating)
                 setLoading(false)
-            }, 500)
+            }
+            getRiderReviews();
 
-            return () => clearTimeout(timer)
         }
-    }, [open, driverId])
+    }, [open])
 
     // Format date to a more readable format
     const formatDate = (dateString: string) => {
@@ -142,7 +132,7 @@ export function RiderDetailsDialog({
                                 <span className="text-sm text-muted-foreground ml-1">({rating.averageRating.toFixed(1)})</span>
                             </div>
                             <p className="text-sm text-muted-foreground">
-                                {!loading ? `${rating.reviewCount} reviews` : "Loading..."}
+                                {!loading ? (rating.reviewCount == 1 ? '1 review' : `${rating.reviewCount} reviews`) : "Loading..."}
                             </p>
                         </div>
                     </div>
