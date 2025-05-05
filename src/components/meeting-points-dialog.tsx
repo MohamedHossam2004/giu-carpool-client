@@ -39,8 +39,7 @@ export function MeetingPointsDialog({
         setIsSubmitting(true)
 
         try {
-            // Here you would typically make an API call to join the ride
-            // For example:
+
             // await fetch('/api/join-ride', {
             //   method: 'POST',
             //   body: JSON.stringify({

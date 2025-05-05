@@ -24,6 +24,8 @@ interface MeetingPoint {
 interface Ride {
   id: string
   driverId: string
+  driverName?: string
+  driverCar?: string
   departureTime: string
   girlsOnly: boolean
   seatsAvailable: number
@@ -89,7 +91,49 @@ export default function ResultsPage() {
         })
 
         const data = await response.json()
-        setRides(data?.data?.searchRides || [])
+
+        const rides = data?.data?.searchRides || [];
+
+        const enrichedRides: Promise<Ride>[] = rides.map(async (ride: Ride) => {
+          const driverRes = await fetch(`http://localhost:4003/graphql`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              query: `query getDriverById($id: ID!) {
+                  getDriverById(id: $id) {
+                    firstName
+                    lastName
+                    driver{
+                      car {
+                        vehicleName
+                      }
+                    }
+                  }
+                }`,
+              variables: {
+                id: Number.parseInt(ride.driverId),
+              },
+            }),
+          })
+
+          const driverDetailsData = await driverRes.json()
+
+          const data = driverDetailsData?.data?.getDriverById
+
+          const driverCar = data.driver?.car?.vehicleName
+
+          const driverName = data.firstName + " " + data.lastName
+
+          return {
+            ...ride,
+            driverName,
+            driverCar,
+          }
+        })
+
+        setRides(await Promise.all(enrichedRides))
       } catch (error) {
         console.error("Error fetching rides:", error)
         toast({
@@ -101,7 +145,7 @@ export default function ResultsPage() {
     }
 
     getRides()
-  }, [date, girlsOnly, giuIsFrom, otherLocationId, query, toast])
+  }, [date, girlsOnly, giuIsFrom, otherLocationId])
 
   const formatDate = (date: string) => {
     const dateObj = new Date(date)
@@ -132,8 +176,8 @@ export default function ResultsPage() {
               key={ride.id}
               id={ride.id}
               driverId={ride.driverId}
-              name={"Driver Name"} // Replace with actual driver name when available
-              car={"Car Model"} // Replace with actual car model when available
+              name={ride.driverName || "Driver Name"}
+              car={ride.driverCar || "Car Model"}
               departureTime={formatDate(ride.departureTime)}
               availableSeats={ride.seatsAvailable}
               avatarSrc={avatarSrc}
@@ -168,9 +212,6 @@ function RideCard({ id, name, car, departureTime, availableSeats, avatarSrc, mee
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
   const [meetingPointsDialogOpen, setMeetingPointsDialogOpen] = useState(false)
   const [selectedMeetingPoint, setSelectedMeetingPoint] = useState<MeetingPoint | null>(null)
-  const { toast } = useToast()
-
-  const searchParams = useSearchParams()
 
   const query = `mutation CreateBooking($rideId: Int!, $meetingPointId: Int!) {
                     createBooking(ride_id: $rideId, meeting_point_id: $meetingPointId) {
@@ -197,6 +238,7 @@ function RideCard({ id, name, car, departureTime, availableSeats, avatarSrc, mee
     });
 
     const data = await response.json();
+
     const bookingId = data.data.createBooking.id;
 
     // Show modal to inform the user about redirection
