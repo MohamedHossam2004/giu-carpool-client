@@ -18,7 +18,7 @@ import {
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
-import { createRideReview } from "@/lib/services/review"
+import { createRideReview, getRideReviews } from "@/lib/services/review"
 import Cookies from 'js-cookie'
 
 interface Ride {
@@ -153,16 +153,37 @@ function ReviewDialog({ rideId, driverId, onReviewSubmit }: ReviewDialogProps) {
 }
 
 function RideItem({ booking }: { booking: Booking }) {
-  const date = new Date(parseInt(booking.ride.departure_time))
-  const formattedDate = format(date, 'dd/MM/yyyy, HH:mm')
+  const date = new Date(parseInt(booking.ride.departure_time));
+  const formattedDate = format(date, 'dd/MM/yyyy, HH:mm');
   const isCompleted = booking.ride.status?.toUpperCase() === 'COMPLETED';
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const [hasReviewed, setHasReviewed] = useState(false);
+  const [loadingReviews, setLoadingReviews] = useState(true);
+  const userId = Cookies.get('user') ? JSON.parse(Cookies.get('user')!).id : null;
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      if (!userId) return;
+
+      try {
+        const reviews = await getRideReviews(booking.ride_id);
+        const userReview = reviews.find((review) => review.riderId === userId);
+        setHasReviewed(!!userReview);
+      } catch (error) {
+        console.error('Error fetching reviews:', error);
+      } finally {
+        setLoadingReviews(false);
+      }
+    };
+
+    fetchReviews();
+  }, [booking.ride_id, userId]);
 
   const handleReviewSubmit = () => {
     setIsReviewDialogOpen(false);
+    setHasReviewed(true);
   };
-
-  const [reviewSubmitted, setReviewSubmitted] = useState(false);
 
   return (
     <Dialog open={isReviewDialogOpen} onOpenChange={setIsReviewDialogOpen}>
@@ -193,7 +214,7 @@ function RideItem({ booking }: { booking: Booking }) {
           <div className="flex flex-col items-end gap-2">
             <div className="font-medium text-black">EGP {booking.price.toFixed(2)}</div>
             {isCompleted ? (
-              reviewSubmitted ? (
+              hasReviewed ? (
                 <Button
                   className="bg-gray-400 text-white cursor-not-allowed"
                   size="sm"
@@ -206,6 +227,7 @@ function RideItem({ booking }: { booking: Booking }) {
                   <Button
                     className="bg-blue-500 hover:bg-blue-600 text-white"
                     size="sm"
+                    disabled={loadingReviews}
                   >
                     Leave Review
                   </Button>
@@ -223,18 +245,15 @@ function RideItem({ booking }: { booking: Booking }) {
           </div>
         </div>
       </div>
-      {isCompleted && !reviewSubmitted && (
+      {isCompleted && !hasReviewed && (
         <ReviewDialog
           rideId={booking.ride_id.toString()}
           driverId={booking.ride.driver_id.toString()}
-          onReviewSubmit={() => {
-            handleReviewSubmit();
-            setReviewSubmitted(true);
-          }}
+          onReviewSubmit={handleReviewSubmit}
         />
       )}
     </Dialog>
-  )
+  );
 }
 
 export function RidesList() {

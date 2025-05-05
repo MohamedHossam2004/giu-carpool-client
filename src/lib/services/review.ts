@@ -1,5 +1,5 @@
 import { ridesClient } from '../apollo-client';
-import { CREATE_RIDE_REVIEW } from '../graphql/queries';
+import { CREATE_RIDE_REVIEW, GET_RIDE_REVIEWS } from '../graphql/queries';
 import Cookies from 'js-cookie';
 
 interface ReviewData {
@@ -26,6 +26,20 @@ export async function createRideReview(reviewData: ReviewData): Promise<any> {
     return data.createRideReview;
   } catch (error) {
     console.error('Error creating ride review:', error);
+    throw error; // Re-throw the error to be handled by the caller
+  }
+}
+
+export async function getRideReviews(rideId: string): Promise<any[]> {
+  try {
+    const { data } = await ridesClient.query({
+      query: GET_RIDE_REVIEWS,
+      variables: { rideId },
+      fetchPolicy: 'network-only', // Ensures fresh data is fetched
+    });
+    return data.getRideReviews;
+  } catch (error) {
+    console.error('Error fetching ride reviews:', error);
     throw error; // Re-throw the error to be handled by the caller
   }
 }
