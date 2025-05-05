@@ -4,7 +4,7 @@ import { Clock, Circle, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
 import { getUserBookings } from "@/lib/services/booking"
-import { format } from "date-fns"
+import { format, set } from "date-fns"
 import { getAreas, getMeetingPointName } from "@/lib/services/area"
 import {
   Dialog,
@@ -56,31 +56,10 @@ function ReviewDialog({ rideId, driverId, onReviewSubmit }: ReviewDialogProps) {
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchUserId = async () => {
-      const token = Cookies.get('accessToken');
-      if (token) {
-        try {
-          const response = await fetch('http://localhost:4000/graphql', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`
-            },
-            body: JSON.stringify({ query: 'query Me { me { id } }' })
-          });
-          const result = await response.json();
-          if (result.data?.me?.id) {
-            setUserId(result.data.me.id.toString());
-          } else {
-            console.error("Failed to fetch user ID from token");
-            if (result.errors) console.error("GraphQL Errors:", result.errors);
-          }
-        } catch (error) {
-          console.error("Error fetching user ID:", error);
-        }
-      }
-    };
-    fetchUserId();
+    const userObject = Cookies.get('user');
+    const parsedUser = userObject ? JSON.parse(userObject) : null;
+    setUserId(parsedUser?.id || null);
+
   }, []);
 
   const handleStarClick = (index: number) => {
@@ -213,7 +192,7 @@ function RideItem({ booking }: { booking: Booking }) {
           </div>
           <div className="flex flex-col items-end gap-2">
             <div className="font-medium text-black">EGP {booking.price.toFixed(2)}</div>
-            {isCompleted && booking.successful ? (
+            {isCompleted ? (
               reviewSubmitted ? (
                 <Button
                   className="bg-gray-400 text-white cursor-not-allowed"
@@ -244,7 +223,7 @@ function RideItem({ booking }: { booking: Booking }) {
           </div>
         </div>
       </div>
-      {isCompleted && booking.successful && !reviewSubmitted && (
+      {isCompleted && !reviewSubmitted && (
         <ReviewDialog
           rideId={booking.ride_id.toString()}
           driverId={booking.ride.driver_id.toString()}
