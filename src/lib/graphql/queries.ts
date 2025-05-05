@@ -72,6 +72,30 @@ export const GET_BOOKINGS = gql`
   }
 `;
 
+export const GET_BOOKING_BY_ID = gql`
+  query GetBookingById($id: ID!) {
+    booking(id: $id) {
+      id
+      ride_id
+      user_id
+      price
+      status
+      successful
+      ride {
+        id
+        driver_id
+        departure_time
+        seats_available
+        status
+        girls_only
+        to_giu
+        area_id
+        # Add other ride fields you might need, e.g., area name
+      }
+    }
+  }
+`;
+
 export const GET_AREAS = gql`
   query GetAreas {
     getAreas {
