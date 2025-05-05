@@ -174,12 +174,13 @@ function RideCard({ id, name, car, departureTime, availableSeats, avatarSrc, mee
 
   const query = `mutation CreateBooking($rideId: Int!, $meetingPointId: Int!) {
                     createBooking(ride_id: $rideId, meeting_point_id: $meetingPointId) {
+                        id
                         status
                 }
               }`
 
   const handleJoinRide = async (meetingPoint: MeetingPoint) => {
-    setSelectedMeetingPoint(meetingPoint)
+    setSelectedMeetingPoint(meetingPoint);
     const response = await fetch("http://localhost:4001/graphql", {
       method: "POST",
       headers: {
@@ -193,16 +194,61 @@ function RideCard({ id, name, car, departureTime, availableSeats, avatarSrc, mee
           meetingPointId: Number.parseInt(meetingPoint.meetingPoint.id.toString()),
         },
       }),
-    })
+    });
 
-    const data = await response.json()
+    const data = await response.json();
+    const bookingId = data.data.createBooking.id;
 
-    toast({
-      title: "Ride Joined Successfully!",
-      description: `You've joined the ride with meeting point: ${meetingPoint.meetingPoint.name} (${meetingPoint.price} EGP)`,
-      className: "bg-green-50 border-green-200 text-green-800",
-    })
-  }
+    // Show modal to inform the user about redirection
+    const modal = document.createElement("div");
+    modal.style.position = "fixed";
+    modal.style.top = "0";
+    modal.style.left = "0";
+    modal.style.width = "100%";
+    modal.style.height = "100%";
+    modal.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+    modal.style.display = "flex";
+    modal.style.justifyContent = "center";
+    modal.style.alignItems = "center";
+    modal.style.zIndex = "1000";
+    modal.style.color = "white";
+    modal.style.fontSize = "1.5rem";
+    modal.style.textAlign = "center";
+    modal.innerHTML = "<div>Redirecting in <span id='countdown'>3</span> seconds...</div>";
+    document.body.appendChild(modal);
+
+    let countdown = 3;
+    const interval = setInterval(() => {
+      countdown -= 1;
+      const countdownElement = document.getElementById("countdown");
+      if (countdownElement) {
+        countdownElement.textContent = countdown.toString();
+      }
+      if (countdown === 0) {
+        clearInterval(interval);
+        modal.remove();
+
+        // Fetch the payment URL after 3 seconds
+        fetch(`http://localhost:4002/${bookingId}/payment-url/`, {
+          method: "GET"
+        })
+          .then((paymentUrlResponse) => paymentUrlResponse.json())
+          .then((paymentData) => {
+            console.log("Payment URL:", paymentData.checkoutUrl);
+
+            if (paymentData.checkoutUrl) {
+              window.location.href = paymentData.checkoutUrl;
+            }
+          });
+      }
+    }, 1000);
+
+    // toast({
+    //   title: "Ride Joined Successfully!",
+    //   description: `You've joined the ride with meeting point: ${meetingPoint.meetingPoint.name} (${meetingPoint.price} EGP)`,
+    //   className: "bg-green-50 border-green-200 text-green-800",
+    // });
+  };
 
   return (
     <Card className="overflow-hidden border">
