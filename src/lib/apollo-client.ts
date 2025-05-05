@@ -20,7 +20,7 @@ const createAuthLink = () => {
 
 // Create client for rides service
 const ridesHttpLink = createHttpLink({
-  uri: process.env.NEXT_PUBLIC_RIDES_URI || 'http://localhost:4000/',
+  uri: process.env.NEXT_PUBLIC_RIDES_URI || 'http://localhost:4000/graphql',
 });
 
 const ridesClient = new ApolloClient({
