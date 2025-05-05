@@ -3,7 +3,6 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { useRouter } from 'next/navigation';
 import DatePicker from 'react-datepicker';
 import { Button } from "@/components/ui/button"
 import 'react-datepicker/dist/react-datepicker.css';
@@ -15,17 +14,8 @@ import { format } from "date-fns"
 import { CalendarIcon, Clock, AlertCircle, ChevronUp, ChevronDown, Calendar, LoaderCircle, ArrowLeftRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link";
-
-// Mock data for locations
-const locations = [
-  { id: 2, name: "New Cairo" },
-  { id: 3, name: "Maadi" },
-  { id: 4, name: "Nasr City" },
-  { id: 5, name: "Downtown" },
-  { id: 6, name: "6th of October" },
-  { id: 7, name: "Sheikh Zayed" },
-  { id: 8, name: "Heliopolis" },
-]
+import { toast } from "./ui/use-toast";
+import Cookies from "js-cookie";
 
 export default function FindRideForm() {
   const [giuIsFrom, setGiuIsFrom] = useState(true)
@@ -42,9 +32,73 @@ export default function FindRideForm() {
   const [timeOpen, setTimeOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const router = useRouter();
+  const [locations, setLocations] = useState<any[]>([])
+  const [otherLocationId, setOtherLocationId] = useState<number | null>(null)
+  const [gender, setGender] = useState<boolean | null>(null)
 
-  // Validate that exactly one location is GIU Campus
+  useEffect(() => {
+
+    const getLocations = async () => {
+
+      try {
+        const response = await fetch("http://localhost:4000/graphql", {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            query:
+              `query getAreas { 
+              getAreas {
+                id
+                name
+              }
+            }`
+          }),
+        })
+
+        const data = await response.json()
+
+        const areas = await data.data.getAreas;
+
+        setLocations(areas);
+
+        const ME_QUERY = `
+                          query Me {
+                              me {
+                                id
+                                gender
+                              }
+                          }
+                        `;
+
+        const profile = await fetch("http://localhost:4003/graphql", {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Cookies.get("accessToken")}`,
+          },
+          body: JSON.stringify({ query: ME_QUERY }),
+        })
+
+        const profileData = await profile.json()
+
+        setGender(profileData.data.me.gender)
+
+
+      } catch (error) {
+        console.error("Error fetching Areas:", error)
+        toast({
+          title: "Error",
+          description: "Failed to fetch Areas. Please try again.",
+          variant: "destructive",
+        })
+      }
+    }
+    getLocations();
+
+  }, [])
+
   useEffect(() => {
     if (!otherLocation) {
       setError("Please select a location")
@@ -62,6 +116,7 @@ export default function FindRideForm() {
 
   const handleOtherLocationChange = (value: string) => {
     setOtherLocation(value)
+    setOtherLocationId(locations.find((location) => location.name === value)?.id)
   }
 
   const toggleDirection = () => {
@@ -71,7 +126,6 @@ export default function FindRideForm() {
   const handleDateChange = (date: Date | undefined) => {
     if (date) {
       setFormData((prev) => ({ ...prev, date }))
-      // Don't close the popover automatically
     }
   }
 
@@ -80,32 +134,16 @@ export default function FindRideForm() {
       ...prev,
       time: { hours, minutes },
     }))
-    // Don't close the popover automatically
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!otherLocation) {
-      setError("Please select a location")
-      return
-    }
-
-    // Prepare the form data for submission
-    const submissionData = {
-      from: giuIsFrom ? "GIU Campus" : otherLocation,
-      to: giuIsFrom ? otherLocation : "GIU Campus",
-      date: formData.date,
-      time: formData.time,
-      girlsOnly,
-    }
-
-    console.log("Form submitted:", submissionData)
-    // Handle form submission logic here
+  const formatFormData = () => {
+    const combinedDate = new Date(formData.date)
+    combinedDate.setHours(formData.time.hours, formData.time.minutes, 0, 0)
+    return combinedDate.toISOString();
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
+    <form className="max-w-4xl mx-auto">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
           <h1 className="text-4xl font-bold mb-5">Find a ride</h1>
@@ -170,7 +208,7 @@ export default function FindRideForm() {
                   <SelectValue placeholder="Select location" />
                 </SelectTrigger>
                 <SelectContent>
-                  {locations.map((location) => (
+                  {locations.length > 0 && locations.map((location) => (
                     <SelectItem key={location.id} value={location.name}>
                       {location.name}
                     </SelectItem>
@@ -358,6 +396,7 @@ export default function FindRideForm() {
               id="girlsOnly"
               checked={girlsOnly}
               onCheckedChange={setGirlsOnly}
+              disabled={gender ? gender : false}
               className="data-[state=checked]:bg-orange-400"
             />
           </div>
@@ -367,7 +406,7 @@ export default function FindRideForm() {
       <div className="mt-14 flex justify-center">
         {otherLocation ?
           <Link
-            href={{ pathname: "/ride-results", query: { ...formData, girlsOnly } as any }}
+            href={{ pathname: "/ride-results", query: { date: formatFormData(), girlsOnly, otherLocation, otherLocationId, giuIsFrom } }}
 
           >
             <Button

@@ -21,7 +21,6 @@ import { VerificationForm } from "@/components/ride-creation/VerificationForm"
 const CREATE_RIDE_MUTATION = gql`
   mutation CreateRide(
     $areaId: Int!, 
-    $driverId: Int!,
     $pricing: [PricingInput!]!, 
     $toGIU: Boolean!, 
     $girlsOnly: Boolean!,
@@ -29,7 +28,6 @@ const CREATE_RIDE_MUTATION = gql`
   ) {
     createRide(
       areaId: $areaId, 
-      driverId: $driverId,
       pricing: $pricing, 
       toGIU: $toGIU, 
       girlsOnly: $girlsOnly,
@@ -171,7 +169,7 @@ export default function CreateRidePage() {
     client: ridesClient,
     context: {
       headers: {
-        authorization: `Bearer ${accessToken}`
+        Authorization: `Bearer ${accessToken}`
       }
     },
     onCompleted: (data) => {

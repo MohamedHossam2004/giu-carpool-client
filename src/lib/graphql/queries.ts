@@ -112,3 +112,49 @@ export const GET_AREAS = gql`
     }
   }
 `;
+
+export const CREATE_AREA_MUTATION = gql`
+  mutation CreateAreaWithMeetingPoints($input: CreateAreaInput!) {
+    createAreaWithMeetingPoints(input: $input) {
+      id
+      name
+      isActive
+      meetingPoints {
+        id
+        name
+        latitude
+        longitude
+        isActive
+      }
+    }
+  }
+`;
+
+export const CREATE_MEETING_POINT_MUTATION = gql`
+  mutation CreateMeetingPoint($areaId: ID!, $input: MeetingPointInput!) {
+    createMeetingPoint(areaId: $areaId, input: $input) {
+      id
+      name
+      latitude
+      longitude
+      isActive
+      area {
+        id
+        name
+        isActive
+      }
+    }
+  }
+`;
+
+export const DELETE_AREA_MUTATION = gql`
+  mutation DeleteArea($id: ID!) {
+    deleteArea(id: $id)
+  }
+`
+
+export const DELETE_MEETING_POINT_MUTATION = gql`
+  mutation DeleteMeetingPoint($id: ID!) {
+    deleteMeetingPoint(id: $id)
+  }
+` 
