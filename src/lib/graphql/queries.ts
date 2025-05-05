@@ -113,6 +113,38 @@ export const GET_AREAS = gql`
   }
 `;
 
+export const CREATE_RIDE_REVIEW = gql`
+  mutation CreateRideReview(
+    $rideId: ID!
+    $riderId: ID!
+    $rating: Int!
+    $review: String
+  ) {
+    createRideReview(
+      rideId: $rideId
+      riderId: $riderId
+      rating: $rating
+      review: $review
+    ) {
+      id
+      rating
+      review
+      createdAt
+    }
+  }
+`;
+
+const GET_MY_REVIEWS = gql`
+  query GetMyReviews($riderId: ID!) {
+    getRiderReviews(riderId: $riderId) {
+      id
+      ride { # Assuming ride object with id is nested
+        id
+      }
+    }
+  }
+`;
+
 export const CREATE_AREA_MUTATION = gql`
   mutation CreateAreaWithMeetingPoints($input: CreateAreaInput!) {
     createAreaWithMeetingPoints(input: $input) {
@@ -151,10 +183,26 @@ export const DELETE_AREA_MUTATION = gql`
   mutation DeleteArea($id: ID!) {
     deleteArea(id: $id)
   }
-`
+`;
 
 export const DELETE_MEETING_POINT_MUTATION = gql`
   mutation DeleteMeetingPoint($id: ID!) {
     deleteMeetingPoint(id: $id)
   }
-` 
+`;
+
+export const GET_RIDE_REVIEWS = gql`
+  query GetRideReviews($rideId: ID!) {
+    getRideReviews(rideId: $rideId) {
+      id
+      ride {
+        id
+      }
+      driverId
+      riderId
+      rating
+      review
+      createdAt
+    }
+  }
+`;
