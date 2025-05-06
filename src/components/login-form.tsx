@@ -76,7 +76,12 @@ export default function LoginForm({ username, setUsername, getDomainSuffix, onSu
               {error}
             </div>
           )}
-          <Button className="w-full bg-black text-white hover:bg-gray-800 h-8 text-sm" onClick={handleSubmit}>Sign in</Button>
+          <Button 
+            className="w-full bg-[#ff9d4d] text-white hover:bg-[#ff8d3d] h-8 text-sm" 
+            onClick={handleSubmit}
+          >
+            Sign in
+          </Button>
         </div>
       </div>
     </motion.div>
