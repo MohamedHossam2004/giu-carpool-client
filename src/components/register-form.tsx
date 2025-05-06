@@ -163,7 +163,7 @@ export default function RegisterForm({
                   name="gender"
                   checked={!userInfo.gender}
                   onChange={() => setUserInfo({...userInfo, gender: false})}
-                  className="h-4 w-4 border-gray-300 text-[#ff9d4d] focus:ring-[#ff9d4d]"
+                  className="h-4 w-4 border-gray-300 text-black focus:ring-black"
                 />
                 <Label htmlFor="male" className="text-sm font-medium">Male</Label>
               </div>
@@ -174,7 +174,7 @@ export default function RegisterForm({
                   name="gender"
                   checked={userInfo.gender}
                   onChange={() => setUserInfo({...userInfo, gender: true})}
-                  className="h-4 w-4 border-gray-300 text-[#ff9d4d] focus:ring-[#ff9d4d]"
+                  className="h-4 w-4 border-gray-300 text-black focus:ring-black"
                 />
                 <Label htmlFor="female" className="text-sm font-medium">Female</Label>
               </div>
@@ -200,7 +200,7 @@ export default function RegisterForm({
           )}
 
           <Button
-            className="w-full bg-[#ff9d4d] text-white hover:bg-[#ff8d3d] h-8 text-sm"
+            className="w-full bg-black text-white hover:bg-gray-800 h-8 text-sm"
             onClick={handleSubmit}
           >
             {isDriver ? "Next" : "Sign up"}
