@@ -107,20 +107,20 @@ export default function AuthPage() {
       </div>
 
       {/* Right side - Auth forms */}
-      <div className="flex w-full flex-col items-center justify-between bg-[#f8b678] px-6 py-4 md:w-2/5">
+      <div className="flex w-full flex-col items-center justify-center bg-[#ff9d4d] px-6 py-4 md:w-2/5">
         <div className="w-full max-w-md">
           {/* Logo */}
-          <div className="mb-3 flex flex-col items-center">
-            <div className="mb-2">
-              <Image src="/logo.png" alt="GIU Logo" width={180} height={65} priority />
+          <div className="mb-6 flex flex-col items-center">
+            <div className="mb-3">
+              <Image src="/logo.png" alt="GIU Logo" width={200} height={75} priority />
             </div>
-            <h1 className="text-lg font-semibold text-gray-700">GIU Car Pooling App</h1>
+            <h1 className="text-xl font-bold text-gray-800">GIU Car Pooling App</h1>
           </div>
 
           {/* Auth Content */}
-          <div className="space-y-2">
+          <div className="space-y-4 bg-white rounded-xl p-6 shadow-lg">
             {/* Title */}
-            <div className="text-center text-sm text-gray-600 mb-1">
+            <div className="text-center text-base font-medium text-gray-700 mb-2">
               {showVerification || registrationStep === "verification"
                 ? "Enter the verification code"
                 : authMode === "login"
@@ -132,32 +132,32 @@ export default function AuthPage() {
 
             {/* User Type Toggle */}
             {!showVerification && registrationStep !== "verification" && (authMode === "login" || (authMode === "register" && registrationStep === "personal")) && (
-              <div className="flex items-center justify-center space-x-8 py-0.5">
+              <div className="flex items-center justify-center space-x-8 py-2">
                 <div className="flex items-center space-x-2">
                   <div
                     className={cn(
-                      "flex h-4 w-4 items-center justify-center rounded-full border",
-                      userType === "student" ? "border-2 border-black bg-black" : "border-gray-400",
+                      "flex h-5 w-5 items-center justify-center rounded-full border-2",
+                      userType === "student" ? "border-black bg-black" : "border-gray-400",
                     )}
                     onClick={() => setUserType("student")}
                   >
-                    {userType === "student" && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+                    {userType === "student" && <div className="h-2 w-2 rounded-full bg-white" />}
                   </div>
-                  <Label htmlFor="student" className="cursor-pointer text-sm" onClick={() => setUserType("student")}>
+                  <Label htmlFor="student" className="cursor-pointer text-sm font-medium" onClick={() => setUserType("student")}>
                     Student
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div
                     className={cn(
-                      "flex h-4 w-4 items-center justify-center rounded-full border",
-                      userType === "alumni" ? "border-2 border-black bg-black" : "border-gray-400",
+                      "flex h-5 w-5 items-center justify-center rounded-full border-2",
+                      userType === "alumni" ? "border-black bg-black" : "border-gray-400",
                     )}
                     onClick={() => setUserType("alumni")}
                   >
-                    {userType === "alumni" && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+                    {userType === "alumni" && <div className="h-2 w-2 rounded-full bg-white" />}
                   </div>
-                  <Label htmlFor="alumni" className="cursor-pointer text-sm" onClick={() => setUserType("alumni")}>
+                  <Label htmlFor="alumni" className="cursor-pointer text-sm font-medium" onClick={() => setUserType("alumni")}>
                     Alumni
                   </Label>
                 </div>
@@ -199,31 +199,17 @@ export default function AuthPage() {
                 />
               )}
             </AnimatePresence>
-
-            {/* Terms and Privacy */}
-            {!showVerification && registrationStep !== "verification" && (
-              <div className="text-center text-xs text-gray-600 pt-1">
-                By clicking continue, you agree to our{" "}
-                <Link href="#" className="font-medium text-black underline">
-                  Terms of Service
-                </Link>{" "}
-                and{" "}
-                <Link href="#" className="font-medium text-black underline">
-                  Privacy Policy
-                </Link>
-              </div>
-            )}
           </div>
         </div>
 
         {/* Login/Register Toggle - Fixed at bottom */}
         {!showVerification && registrationStep !== "verification" && (
-          <div className="flex justify-center w-full mt-3">
-            <div className="inline-flex rounded-md bg-white p-1 shadow-sm">
+          <div className="flex justify-center w-full mt-6">
+            <div className="inline-flex rounded-lg bg-white p-1.5 shadow-md">
               <button
                 className={cn(
-                  "rounded px-4 py-1 text-xs transition-all",
-                  authMode === "login" ? "bg-[#f8b678] font-medium shadow-sm" : "text-gray-600",
+                  "rounded-md px-6 py-2 text-sm font-medium transition-all",
+                  authMode === "login" ? "bg-[#ff9d4d] text-white shadow-sm" : "text-gray-600 hover:text-gray-800",
                 )}
                 onClick={() => setAuthMode("login")}
               >
@@ -231,8 +217,8 @@ export default function AuthPage() {
               </button>
               <button
                 className={cn(
-                  "rounded px-4 py-1 text-xs transition-all",
-                  authMode === "register" ? "bg-[#f8b678] font-medium shadow-sm" : "text-gray-600",
+                  "rounded-md px-6 py-2 text-sm font-medium transition-all",
+                  authMode === "register" ? "bg-[#ff9d4d] text-white shadow-sm" : "text-gray-600 hover:text-gray-800",
                 )}
                 onClick={() => setAuthMode("register")}
               >

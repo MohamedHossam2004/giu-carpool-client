@@ -152,20 +152,31 @@ export default function RegisterForm({
             onChange={(e) => setUserInfo({...userInfo, password: e.target.value})}
           />
 
-          {/* Gender Toggle */}
-          <div className="flex items-center justify-between rounded-md bg-white p-1.5 px-3">
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="gender" className="text-sm">
-                Gender
-              </Label>
+          {/* Gender Radio Buttons */}
+          <div className="flex items-center space-x-4 rounded-md bg-white p-3">
+            <Label className="text-sm font-medium">Gender</Label>
+            <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <span className={cn("text-sm", !userInfo.gender ? "text-gray-400" : "text-black")}>Male</span>
-                <Switch 
-                  id="gender" 
-                  checked={userInfo.gender} 
-                  onCheckedChange={(checked) => setUserInfo({...userInfo, gender: checked})}
+                <input
+                  type="radio"
+                  id="male"
+                  name="gender"
+                  checked={!userInfo.gender}
+                  onChange={() => setUserInfo({...userInfo, gender: false})}
+                  className="h-4 w-4 border-gray-300 text-black focus:ring-black"
                 />
-                <span className={cn("text-sm", userInfo.gender ? "text-gray-400" : "text-black")}>Female</span>
+                <Label htmlFor="male" className="text-sm font-medium">Male</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id="female"
+                  name="gender"
+                  checked={userInfo.gender}
+                  onChange={() => setUserInfo({...userInfo, gender: true})}
+                  className="h-4 w-4 border-gray-300 text-black focus:ring-black"
+                />
+                <Label htmlFor="female" className="text-sm font-medium">Female</Label>
               </div>
             </div>
           </div>
