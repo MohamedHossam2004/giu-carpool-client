@@ -206,3 +206,107 @@ export const GET_RIDE_REVIEWS = gql`
     }
   }
 `;
+
+export const GET_DRIVER_RIDE_BY_STATUS = gql`
+  query GetDriverRideByStatus($status: RideStatus!) {
+    getDriverRideByStatus(status: $status) {
+      id
+      status
+      toGIU
+      girlsOnly
+      departureTime
+      area {
+        id
+        name
+      }
+      meetingPoints {
+        id
+        price
+        orderIndex
+        meetingPoint {
+          id
+          name
+        }
+      }
+      passengers {
+        id
+        passengerId
+        passengerName
+      }
+      reviews {
+        id
+        rating
+        review
+      }
+    }
+  }
+`;
+
+export const GET_RIDE_BY_ID = gql`
+  query GetRide($id: ID!) {
+    ride(id: $id) {
+      id
+      status
+      driverId
+      girlsOnly
+      toGIU
+      departureTime
+      createdAt
+      updatedAt
+      seatsAvailable
+      area {
+        name
+      }
+      meetingPoints {
+        id
+        price
+        orderIndex
+        meetingPoint {
+          id
+          name
+          latitude
+          longitude
+          isActive
+        }
+      }
+      passengers {
+        id
+        passengerId
+        passengerName
+        createdAt
+      }
+      reviews {
+        id
+        rating
+        review
+        createdAt
+      }
+    }
+  }
+`;
+
+export const UPDATE_RIDE_STATUS = gql`
+  mutation UpdateRideStatus($rideId: Int!, $status: RideStatus!) {
+    updateRideStatus(rideId: $rideId, status: $status) {
+      id
+      status
+      updatedAt
+    }
+  }
+`;
+
+// REMOVE_PASSENGER Mutation
+export const REMOVE_PASSENGER = gql`
+  mutation RemovePassenger($rideId: Int!) {
+    removePassenger(rideId: $rideId) {
+      id
+      status
+      seatsAvailable
+      passengers {
+        id
+        passengerName
+      }
+    }
+  }
+`;
+
