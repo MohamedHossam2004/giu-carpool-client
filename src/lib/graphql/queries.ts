@@ -294,3 +294,19 @@ export const UPDATE_RIDE_STATUS = gql`
     }
   }
 `;
+
+// REMOVE_PASSENGER Mutation
+export const REMOVE_PASSENGER = gql`
+  mutation RemovePassenger($rideId: Int!) {
+    removePassenger(rideId: $rideId) {
+      id
+      status
+      seatsAvailable
+      passengers {
+        id
+        passengerName
+      }
+    }
+  }
+`;
+
