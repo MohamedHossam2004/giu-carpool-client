@@ -1,6 +1,6 @@
 'use client';
 
-import { Clock, Circle, Star } from "lucide-react";
+import { Clock, Circle, Star, MapPin, Users } from "lucide-react";
 import { format } from "date-fns";
 
 interface Area {
@@ -74,38 +74,44 @@ function RideItem({ ride }: { ride: Ride }) {
             {ride.toGIU ? `To GIU from ${ride.area.name}` : `From GIU to ${ride.area.name}`}
           </h3>
         </div>
-        <div className="px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-medium">
+        <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+          ride.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
+          ride.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-800' :
+          ride.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
+          'bg-orange-100 text-orange-800'
+        }`}>
           {ride.status}
         </div>
       </div>
 
       <div className="space-y-3 mb-4">
         <div className="flex items-center gap-2">
-          <Circle className="h-4 w-4 text-gray-500" />
+          <MapPin className="h-4 w-4 text-gray-500" />
           <span className="text-sm text-gray-700">
             {ride.meetingPoints.length} meeting point{ride.meetingPoints.length > 1 ? 's' : ''}
           </span>
         </div>
 
         <div className="flex items-center gap-2">
-          <Star className="h-4 w-4 text-gray-500" />
+          <Users className="h-4 w-4 text-gray-500" />
           <span className="text-sm text-gray-700">
             {ride.seatsAvailable} seat{ride.seatsAvailable !== 1 ? 's' : ''} available
           </span>
         </div>
 
         {ride.girlsOnly && (
-          <div className="text-sm text-pink-600 font-medium">
+          <div className="text-sm text-pink-600 font-medium flex items-center gap-2">
+            <Star className="h-4 w-4" />
             Girls only
           </div>
         )}
 
         {ride.passengers.length > 0 && (
-          <div className="mt-2">
-            <h4 className="text-sm font-medium text-gray-700">Passengers:</h4>
+          <div className="mt-2 p-2 bg-blue-50 rounded-md">
+            <h4 className="text-sm font-medium text-blue-800">Passengers:</h4>
             <ul className="mt-1 space-y-1">
               {ride.passengers.map((passenger) => (
-                <li key={passenger.id} className="text-sm text-gray-600">
+                <li key={passenger.id} className="text-sm text-blue-700">
                   {passenger.passengerName}
                 </li>
               ))}
@@ -114,12 +120,18 @@ function RideItem({ ride }: { ride: Ride }) {
         )}
 
         {ride.reviews.length > 0 && (
-          <div className="mt-2">
-            <h4 className="text-sm font-medium text-gray-700">Reviews:</h4>
+          <div className="mt-2 p-2 bg-amber-50 rounded-md">
+            <h4 className="text-sm font-medium text-amber-800">Reviews:</h4>
             <ul className="mt-1 space-y-1">
               {ride.reviews.map((review) => (
-                <li key={review.id} className="text-sm text-gray-600">
-                  Rating: {review.rating}/5 - {review.review || 'No comment'}
+                <li key={review.id} className="text-sm text-amber-700">
+                  <div className="flex items-center gap-1">
+                    <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                    <span>{review.rating}/5</span>
+                  </div>
+                  {review.review && (
+                    <p className="mt-1 italic">"{review.review}"</p>
+                  )}
                 </li>
               ))}
             </ul>
@@ -142,21 +154,15 @@ function RideItem({ ride }: { ride: Ride }) {
 export function AdminRidesList({ rides }: AdminRidesListProps) {
   if (rides.length === 0) {
     return (
-      <div className="space-y-4">
-        <h2 className="text-3xl font-semibold text-black">All Rides</h2>
-        <div className="text-center text-black">No rides found</div>
-      </div>
+      <div className="text-center text-black">No rides found</div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <h2 className="text-3xl font-semibold text-black">All Rides</h2>
-      <div className="space-y-4">
-        {rides.map((ride) => (
-          <RideItem key={ride.id} ride={ride} />
-        ))}
-      </div>
+      {rides.map((ride) => (
+        <RideItem key={ride.id} ride={ride} />
+      ))}
     </div>
   );
 } 

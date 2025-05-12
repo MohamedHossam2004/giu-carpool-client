@@ -1,7 +1,6 @@
 'use client'
 
 import { redirect, usePathname } from 'next/navigation'
-import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { useEffect, useState } from 'react'
 
@@ -37,42 +36,7 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
-        <nav className="flex space-x-4">
-          <Link 
-            href="/dashboard/admin/pendingDrivers"
-            className={`px-4 py-2 rounded-md ${
-              pathname === '/dashboard/admin/pendingDrivers' 
-                ? 'bg-gray-100' 
-                : 'hover:bg-gray-100'
-            }`}
-          >
-            Pending Drivers
-          </Link>
-          <Link 
-            href="/dashboard/admin/reviews"
-            className={`px-4 py-2 rounded-md ${
-              pathname === '/dashboard/admin/reviews' 
-                ? 'bg-gray-100' 
-                : 'hover:bg-gray-100'
-            }`}
-          >
-            Reviews
-          </Link>
-          <Link 
-            href="/dashboard/admin/payments"
-            className={`px-4 py-2 rounded-md ${
-              pathname === '/dashboard/admin/payments' 
-                ? 'bg-gray-100' 
-                : 'hover:bg-gray-100'
-            }`}
-          >
-            Payments
-          </Link>
-        </nav>
-      </div>
+    <div className="flex-1 w-full">
       {children}
     </div>
   )
