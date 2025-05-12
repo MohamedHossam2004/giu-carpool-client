@@ -61,6 +61,16 @@ export default function AdminLayout({
           >
             Reviews
           </Link>
+          <Link 
+            href="/dashboard/admin/payments"
+            className={`px-4 py-2 rounded-md ${
+              pathname === '/dashboard/admin/payments' 
+                ? 'bg-gray-100' 
+                : 'hover:bg-gray-100'
+            }`}
+          >
+            Payments
+          </Link>
         </nav>
       </div>
       {children}
