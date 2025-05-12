@@ -58,6 +58,13 @@ export function ProfileCard() {
     }
   }
 
+  const handleLogout = () => {
+    Cookies.remove('accessToken')
+    Cookies.remove('refreshToken')
+    Cookies.remove('user')
+    router.push('/login')
+  }
+
   if (loading) return <div>Loading...</div>
   if (error) return <div>Error loading profile</div>
 
@@ -119,14 +126,23 @@ export function ProfileCard() {
               </div>
             )}
           </div>
-          <Button 
-            variant="destructive" 
-            disabled={isDeleting}
-            onClick={handleDeleteAccount}
-            className="bg-red-600 text-white hover:bg-red-700 h-fit mt-auto"
-          >
-            {isDeleting ? 'Deleting...' : 'Delete Account'}
-          </Button>
+          <div className="flex flex-col gap-2 self-end">
+            <Button 
+              variant="outline"
+              onClick={handleLogout}
+              className="h-fit"
+            >
+              Logout
+            </Button>
+            <Button 
+              variant="destructive" 
+              disabled={isDeleting}
+              onClick={handleDeleteAccount}
+              className="bg-red-600 text-white hover:bg-red-700 h-fit"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete Account'}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

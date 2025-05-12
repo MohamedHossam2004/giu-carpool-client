@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Search, Car, Menu, Users, Star, CreditCard } from "lucide-react"
+import { Home, Search, Car, Menu, Users, Star, CreditCard, User, Settings } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
 import { useAuth } from "@/contexts/AuthContext"
@@ -128,6 +128,21 @@ export function Sidebar() {
               <Car className="h-5 w-5" />
               <span>Ride Creation</span>
             </Link>
+
+            <Link
+              href="/dashboard/profile"
+              className={cn(
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium",
+                pathname === "/dashboard/profile"
+                  ? "bg-gray-100 text-black"
+                  : "text-black hover:bg-gray-50",
+              )}
+            >
+              <User className="h-5 w-5" />
+              <span>Profile</span>
+            </Link>
+
+          
           </>
         )}
       </nav>
