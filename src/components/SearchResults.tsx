@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -32,10 +32,10 @@ interface Ride {
   meetingPoints: MeetingPoint[]
 }
 
-export default function ResultsPage() {
+// Separate client component for the search results content
+function SearchResultsContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-
   const { toast } = useToast()
 
   const handleBackClick = () => {
@@ -44,11 +44,8 @@ export default function ResultsPage() {
 
   const giuIsFrom = searchParams.get("giuIsFrom")
   const date = searchParams.get("date")
-
   const [rides, setRides] = useState<Ride[]>([])
-
   const avatarSrc = "./marker-icon-2x.png"
-
   const girlsOnly = searchParams.get("girlsOnly")
   const otherLocationId = searchParams.get("otherLocationId")
 
@@ -194,6 +191,22 @@ export default function ResultsPage() {
         )}
       </div>
     </div>
+  )
+}
+
+// Main component with Suspense boundary
+export default function ResultsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex-1 p-6 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading search results...</p>
+        </div>
+      </div>
+    }>
+      <SearchResultsContent />
+    </Suspense>
   )
 }
 
