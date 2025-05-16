@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -32,10 +32,10 @@ interface Ride {
   meetingPoints: MeetingPoint[]
 }
 
-export default function ResultsPage() {
+// Separate client component for the search results content
+function SearchResultsContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-
   const { toast } = useToast()
 
   const handleBackClick = () => {
@@ -44,11 +44,8 @@ export default function ResultsPage() {
 
   const giuIsFrom = searchParams.get("giuIsFrom")
   const date = searchParams.get("date")
-
   const [rides, setRides] = useState<Ride[]>([])
-
   const avatarSrc = "./marker-icon-2x.png"
-
   const girlsOnly = searchParams.get("girlsOnly")
   const otherLocationId = searchParams.get("otherLocationId")
 
@@ -74,7 +71,7 @@ export default function ResultsPage() {
   useEffect(() => {
     const getRides = async () => {
       try {
-        const response = await fetch("http://localhost:4000/graphql", {
+        const response = await fetch("http://3.239.254.154:4000/graphql", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -95,7 +92,7 @@ export default function ResultsPage() {
         const rides = data?.data?.searchRides || [];
 
         const enrichedRides: Promise<Ride>[] = rides.map(async (ride: Ride) => {
-          const driverRes = await fetch(`http://localhost:4003/graphql`, {
+          const driverRes = await fetch(`http://3.84.209.34:4003/graphql`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -197,6 +194,22 @@ export default function ResultsPage() {
   )
 }
 
+// Main component with Suspense boundary
+export default function ResultsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex-1 p-6 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading search results...</p>
+        </div>
+      </div>
+    }>
+      <SearchResultsContent />
+    </Suspense>
+  )
+}
+
 interface RideCardProps {
   id: string
   name: string
@@ -222,7 +235,7 @@ function RideCard({ id, name, car, departureTime, availableSeats, avatarSrc, mee
 
   const handleJoinRide = async (meetingPoint: MeetingPoint) => {
     setSelectedMeetingPoint(meetingPoint);
-    const response = await fetch("http://localhost:4001/graphql", {
+    const response = await fetch("http://54.211.248.22:4001/graphql", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -271,7 +284,7 @@ function RideCard({ id, name, car, departureTime, availableSeats, avatarSrc, mee
         modal.remove();
 
         // Fetch the payment URL after 3 seconds
-        fetch(`http://localhost:4002/${bookingId}/payment-url/`, {
+        fetch(`http://100.27.16.234:4002/${bookingId}/payment-url/`, {
           method: "GET"
         })
           .then((paymentUrlResponse) => paymentUrlResponse.json())

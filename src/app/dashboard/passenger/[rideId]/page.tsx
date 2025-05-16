@@ -3,9 +3,11 @@
 import { use } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from '@apollo/client';
-import { GET_RIDE_BY_ID, REMOVE_PASSENGER } from '@/lib/graphql/queries';
-import { ridesClient } from '@/lib/apollo-client';
-import { useState } from 'react';
+import { GET_RIDE_BY_ID, CANCEL_BOOKING, UPDATE_RIDE_STATUS } from '@/lib/graphql/queries'; // Changed REMOVE_PASSENGER to CANCEL_BOOKING
+import { ridesClient, bookingClient } from '@/lib/apollo-client'; // Added bookingClient
+import { useState, useEffect } from 'react';
+import { getUserBookings } from '@/lib/services/booking';
+import Cookies from 'js-cookie';
 import {
   Dialog,
   DialogTrigger,
@@ -31,9 +33,29 @@ interface MeetingPoint {
 }
 
 interface Passenger {
-  passengerId: number;
+  id: string;
+  passengerId: string;
   passengerName: string;
   createdAt: string;
+}
+
+interface Booking {
+  id: string;
+  ride_id: string;
+  user_id: string;
+  price: number;
+  status: string;
+  successful: boolean;
+  ride: {
+    id: string;
+    driver_id: string;
+    departure_time: string;
+    seats_available: number;
+    status: string;
+    girls_only: boolean;
+    to_giu: boolean;
+    area_id: string;
+  };
 }
 
 interface Ride {
@@ -65,15 +87,37 @@ export default function RideDetails({ params }: RideDetailsProps) {
     variables: { id: rideIdNumber },
     client: ridesClient,
   });
+  console.log(data)
+  const [cancelling, setCancelling] = useState(false); // Renamed from removing
+  const [booking, setBooking] = useState<Booking | null>(null);
+  const userId = Cookies.get('user') ? JSON.parse(Cookies.get('user')!).id : null;
 
-  const [removing, setRemoving] = useState(false);
+  useEffect(() => {
+    const fetchUserBooking = async () => {
+      try {
+        const bookings = await getUserBookings();
+        const userBooking = bookings.find(
+          (booking) => {
+            return parseInt(booking.ride_id) === parseInt(rideId)&& booking.successful
+          }
+        );
+        setBooking(userBooking || null);
+      } catch (error) {
+        console.error('Error fetching user booking:', error);
+      }
+    };
 
-  const [removePassenger] = useMutation(REMOVE_PASSENGER, {
-    client: ridesClient,
+    if (userId) {
+      fetchUserBooking();
+    }
+  }, [rideId, userId]);
+
+  const [cancelBookingMutation] = useMutation(CANCEL_BOOKING, { 
+    client: bookingClient, // Changed from ridesClient
     onCompleted: () => router.push('/dashboard'),
     onError: (err) => {
-      console.error("Failed to cancel ride:", err.message);
-      setRemoving(false);
+      console.error("Failed to cancel booking:", err.message); // Updated error message
+      setCancelling(false);
     }
   });
 
@@ -86,16 +130,21 @@ export default function RideDetails({ params }: RideDetailsProps) {
   const formattedDate = new Date(ride.departureTime).toLocaleString();
 
   const handleCancelRide = async () => {
-    setRemoving(true);
+    if (!booking) {
+      console.error("No booking found for this ride.");
+      return;
+    }
+
+    setCancelling(true);
     try {
-      await removePassenger({
+      await cancelBookingMutation({
         variables: {
-          rideId: rideIdNumber,
+          id: Number(booking.id),
         },
       });
     } catch (err) {
       console.error("Cancel failed:", (err as Error).message);
-      setRemoving(false);
+      setCancelling(false);
     }
   };
 
@@ -125,9 +174,9 @@ export default function RideDetails({ params }: RideDetailsProps) {
                 <Button
                   className="bg-red-600 hover:bg-red-700 text-white"
                   onClick={handleCancelRide}
-                  disabled={removing}
+                  disabled={cancelling} // Changed from removing
                 >
-                  {removing ? 'Cancelling...' : 'Yes, Leave Ride'}
+                  {cancelling ? 'Cancelling...' : 'Yes, Leave Ride'} {/* Changed from removing */}
                 </Button>
                 <DialogClose asChild>
                   <Button variant="ghost">No, stay</Button>

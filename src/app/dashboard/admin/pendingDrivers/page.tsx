@@ -81,7 +81,7 @@ export default function PendingDriversPage() {
 
   const handleViewLicense = async (userId: string) => {
     try {
-      const response = await fetch(`http://localhost:4003/admin/download-license?userId=${userId}`, {
+      const response = await fetch(`http://3.84.209.34:4003/admin/download-license?userId=${userId}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -97,7 +97,7 @@ export default function PendingDriversPage() {
 
   const handleApproveDriver = async (userId: number) => {
     try {
-      const response = await fetch('http://localhost:4003/graphql', {
+      const response = await fetch('http://3.84.209.34:4003/graphql', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
