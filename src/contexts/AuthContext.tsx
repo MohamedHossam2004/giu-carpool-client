@@ -190,7 +190,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       Cookies.set('user', JSON.stringify(userData), cookieOptions);
       
       setUser(userData);
-      console.log(userData);
+      
+      // Redirect based on user role
+      if (userData.isAdmin) {
+        window.location.href = '/dashboard/admin';
+      } else {
+        window.location.href = '/dashboard';
+      }
+      
       return { success: true, message: 'Login successful' };
     } catch (error: any) {
       return { success: false, message: error.message };
@@ -233,8 +240,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       Cookies.set('accessToken', accessToken, cookieOptions);
       Cookies.set('refreshToken', refreshToken, cookieOptions);
       Cookies.set('user', JSON.stringify(userData), cookieOptions);
-      console.log(userData);
+      
       setUser(userData);
+      
+      // Redirect based on user role
+      if (userData.isAdmin) {
+        window.location.href = '/dashboard/admin';
+      } else {
+        window.location.href = '/dashboard';
+      }
+      
       return { success: true, message: 'Registration successful' };
     } catch (error: any) {
       return { success: false, message: error.message };

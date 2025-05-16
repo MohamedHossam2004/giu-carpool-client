@@ -27,11 +27,14 @@ export default function ProtectedRoute({
     if (!loading) {
       if (!isAuthenticated || !token) {
         router.push('/login');
-      } else if (pathname.startsWith('/dashboard/admin') && !user?.isAdmin) {
-        // Prevent non-admin users from accessing admin routes
+      } else if (user?.isAdmin) {
+        // If user is admin and not on an admin route, redirect to admin dashboard
+        if (!pathname.startsWith('/dashboard/admin')) {
+          router.push('/dashboard/admin');
+        }
+      } else if (pathname.startsWith('/dashboard/admin')) {
+        // If non-admin user tries to access admin routes, redirect to user dashboard
         router.push('/dashboard');
-      } else if (user?.isAdmin && !pathname.startsWith('/dashboard/admin')) {
-        router.push('/dashboard/admin');
       } else if (adminOnly && !user?.isAdmin) {
         router.push('/dashboard');
       } else if (driverOnly && !user?.isDriver && !user?.isAdmin) {

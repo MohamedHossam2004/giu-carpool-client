@@ -1,11 +1,20 @@
+'use client'
+
 import ProtectedRoute from '@/components/ProtectedRoute'
-import { redirect } from 'next/navigation'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
 export default function Home() {
+  const router = useRouter()
+
+  useEffect(() => {
+    router.push('/dashboard')
+  }, [router])
+
   return (
     <ProtectedRoute>
-      <div>
-        <h1>Hello World</h1>
+      <div className="flex items-center justify-center h-screen">
+        <div className="h-8 w-8 rounded-full bg-[#5F47E6] animate-ping" />
       </div>
     </ProtectedRoute>
   )
