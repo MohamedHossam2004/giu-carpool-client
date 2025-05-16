@@ -162,7 +162,7 @@ export default function RegisterForm({
                   id="male"
                   name="gender"
                   checked={!userInfo.gender}
-                  onChange={() => setUserInfo({...userInfo, gender: false})}
+                  onChange={() => setUserInfo({...userInfo, gender: true})}
                   className="h-4 w-4 border-gray-300 text-black focus:ring-black"
                 />
                 <Label htmlFor="male" className="text-sm font-medium">Male</Label>
@@ -173,7 +173,7 @@ export default function RegisterForm({
                   id="female"
                   name="gender"
                   checked={userInfo.gender}
-                  onChange={() => setUserInfo({...userInfo, gender: true})}
+                  onChange={() => setUserInfo({...userInfo, gender: false})}
                   className="h-4 w-4 border-gray-300 text-black focus:ring-black"
                 />
                 <Label htmlFor="female" className="text-sm font-medium">Female</Label>
