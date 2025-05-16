@@ -53,7 +53,7 @@ const bookingClient = new ApolloClient({
 
 // Create client for payment service
 const paymentHttpLink = createHttpLink({
-  uri: process.env.NEXT_PUBLIC_PAYMENT_URI || 'https://100.27.16.234/',
+  uri: process.env.NEXT_PUBLIC_PAYMENT_URI || 'http://100.27.16.234:4002/',
 });
 
 const paymentClient = new ApolloClient({

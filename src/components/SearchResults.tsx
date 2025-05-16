@@ -284,7 +284,7 @@ function RideCard({ id, name, car, departureTime, availableSeats, avatarSrc, mee
         modal.remove();
 
         // Fetch the payment URL after 3 seconds
-        fetch(`https://100.27.16.234/${bookingId}/payment-url/`, {
+        fetch(`http://100.27.16.234:4002/${bookingId}/payment-url/`, {
           method: "GET"
         })
           .then((paymentUrlResponse) => paymentUrlResponse.json())
