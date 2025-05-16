@@ -363,7 +363,7 @@ const CreateRideMap: React.FC<CreateRideMapProps> = ({
     setError(null);
     try {
       console.log('Fetching meeting points for area:', areaId);
-      const response = await fetch('http://3.239.254.154:4000/graphql', {
+      const response = await fetch('https://3.239.254.154/graphql', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

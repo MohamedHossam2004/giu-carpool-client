@@ -71,7 +71,7 @@ function SearchResultsContent() {
   useEffect(() => {
     const getRides = async () => {
       try {
-        const response = await fetch("http://3.239.254.154:4000/graphql", {
+        const response = await fetch("https://3.239.254.154/graphql", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -92,7 +92,7 @@ function SearchResultsContent() {
         const rides = data?.data?.searchRides || [];
 
         const enrichedRides: Promise<Ride>[] = rides.map(async (ride: Ride) => {
-          const driverRes = await fetch(`http://3.84.209.34:4003/graphql`, {
+          const driverRes = await fetch(`https://3.84.209.34/graphql`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -235,7 +235,7 @@ function RideCard({ id, name, car, departureTime, availableSeats, avatarSrc, mee
 
   const handleJoinRide = async (meetingPoint: MeetingPoint) => {
     setSelectedMeetingPoint(meetingPoint);
-    const response = await fetch("http://54.211.248.22:4001/graphql", {
+    const response = await fetch("https://54.211.248.22/graphql", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -284,7 +284,7 @@ function RideCard({ id, name, car, departureTime, availableSeats, avatarSrc, mee
         modal.remove();
 
         // Fetch the payment URL after 3 seconds
-        fetch(`http://100.27.16.234:4002/${bookingId}/payment-url/`, {
+        fetch(`https://100.27.16.234/${bookingId}/payment-url/`, {
           method: "GET"
         })
           .then((paymentUrlResponse) => paymentUrlResponse.json())

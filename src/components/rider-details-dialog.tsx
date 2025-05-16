@@ -56,7 +56,7 @@ export function RiderDetailsDialog({
     useEffect(() => {
         if (open) {
             const getRiderReviews = async () => {
-                const response = await fetch("http://3.239.254.154:4000/graphql", {
+                const response = await fetch("https://3.239.254.154/graphql", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
