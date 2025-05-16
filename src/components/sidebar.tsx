@@ -6,10 +6,21 @@ import { Home, Search, Car, Menu, Users, Star, CreditCard, User, Settings } from
 import { cn } from "@/lib/utils"
 import Image from "next/image"
 import { useAuth } from "@/contexts/AuthContext"
+import { useQuery } from '@apollo/client';
+import { ME_QUERY } from '@/lib/graphql/queries';
+import Cookies from 'js-cookie';
 
 export function Sidebar() {
   const pathname = usePathname()
   const { user } = useAuth()
+  const accessToken = Cookies.get('accessToken');
+  const { data: userData } = useQuery(ME_QUERY, {
+    context: {
+      headers: {
+        authorization: `Bearer ${accessToken}`
+      }
+    }
+  });
 
   return (
     <aside className="flex h-full w-64 flex-col border-r bg-white">
@@ -116,18 +127,20 @@ export function Sidebar() {
               <span>Find a Ride</span>
             </Link>
 
-            <Link
-              href="/ride-creation"
-              className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium",
-                pathname === "/ride-creation"
-                  ? "bg-gray-100 text-black"
-                  : "text-black hover:bg-gray-50",
-              )}
-            >
-              <Car className="h-5 w-5" />
-              <span>Ride Creation</span>
-            </Link>
+            {userData?.me?.isDriver && (
+              <Link
+                href="/ride-creation"
+                className={cn(
+                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium",
+                  pathname === "/ride-creation"
+                    ? "bg-gray-100 text-black"
+                    : "text-black hover:bg-gray-50",
+                )}
+              >
+                <Car className="h-5 w-5" />
+                <span>Ride Creation</span>
+              </Link>
+            )}
 
             <Link
               href="/dashboard/profile"
