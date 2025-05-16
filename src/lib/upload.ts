@@ -5,7 +5,7 @@ export async function uploadFile(file: File, accessToken: string): Promise<strin
     formData.append('file', file)
 
     // Upload file
-    const response = await fetch('http://localhost:4003/upload-license', {
+    const response = await fetch('http://3.84.209.34:4003/upload-license', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,

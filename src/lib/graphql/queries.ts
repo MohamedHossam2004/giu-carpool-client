@@ -49,6 +49,17 @@ export const GET_DRIVER_AVERAGE_RATING = gql`
   }
 `;
 
+export const CANCEL_BOOKING = gql`
+  mutation CancelBooking($id: Int!) {
+    cancelBooking(id: $id) {
+      id
+      status
+      ride_id # Optional: if useful for client-side updates
+      user_id # Optional
+    }
+  }
+`;
+
 export const GET_BOOKINGS = gql`
   query GetBookings {
     getBookings {

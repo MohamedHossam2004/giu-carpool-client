@@ -20,7 +20,7 @@ const createAuthLink = () => {
 
 // Create client for rides service
 const ridesHttpLink = createHttpLink({
-  uri: process.env.NEXT_PUBLIC_RIDES_URI || 'http://localhost:4000/graphql',
+  uri: process.env.NEXT_PUBLIC_RIDES_URI || 'http://3.239.254.154:4000/graphql',
 });
 
 const ridesClient = new ApolloClient({
@@ -31,7 +31,7 @@ const ridesClient = new ApolloClient({
 
 // Create client for user service
 const userHttpLink = createHttpLink({
-  uri: process.env.NEXT_PUBLIC_USER_URI || 'http://localhost:4003/graphql',
+  uri: process.env.NEXT_PUBLIC_USER_URI || 'http://3.84.209.34:4003/graphql',
 });
 
 const userClient = new ApolloClient({
@@ -42,7 +42,7 @@ const userClient = new ApolloClient({
 
 // Create client for booking service
 const bookingHttpLink = createHttpLink({
-  uri: process.env.NEXT_PUBLIC_BOOKING_URI || 'http://localhost:4001/graphql',
+  uri: process.env.NEXT_PUBLIC_BOOKING_URI || 'http://54.211.248.22:4001/graphql',
 });
 
 const bookingClient = new ApolloClient({
@@ -53,7 +53,7 @@ const bookingClient = new ApolloClient({
 
 // Create client for payment service
 const paymentHttpLink = createHttpLink({
-  uri: process.env.NEXT_PUBLIC_PAYMENT_URI || 'http://localhost:4002/graphql',
+  uri: process.env.NEXT_PUBLIC_PAYMENT_URI || 'http://100.27.16.234:4002/graphql',
 });
 
 const paymentClient = new ApolloClient({

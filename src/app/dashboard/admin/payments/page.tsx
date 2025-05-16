@@ -15,7 +15,7 @@ export default function PaymentsPage() {
 
     const fetchPayments = async () => {
       try {
-        const response = await fetch('http://localhost:4002/admin/payments', {
+        const response = await fetch('http://100.27.16.234:4002/admin/payments', {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },

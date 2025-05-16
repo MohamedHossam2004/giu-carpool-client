@@ -41,7 +41,7 @@ export default function FindRideForm() {
     const getLocations = async () => {
 
       try {
-        const response = await fetch("http://localhost:4000/graphql", {
+        const response = await fetch("http://3.239.254.154:4000/graphql", {
           method: "POST",
           headers: {
             'Content-Type': 'application/json',
@@ -72,7 +72,7 @@ export default function FindRideForm() {
                           }
                         `;
 
-        const profile = await fetch("http://localhost:4003/graphql", {
+        const profile = await fetch("http://3.84.209.34:4003/graphql", {
           method: "POST",
           headers: {
             'Content-Type': 'application/json',

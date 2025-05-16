@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery, gql } from "@apollo/client";
+import { useQuery, useLazyQuery, gql } from "@apollo/client";
 import { ridesClient } from "@/lib/apollo-client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -165,48 +165,24 @@ export default function DashboardPage() {
     }
   });
 
-  const { data: passengerUpcomingRidesData, loading: passengerUpcomingLoading } = useQuery(GET_USER_RIDES_BY_STATUS, {
-    variables: { status: "PENDING" },
+  const [fetchPassengerUpcomingRides, { data: passengerUpcomingRidesData, loading: passengerUpcomingLoading }] = useLazyQuery(GET_USER_RIDES_BY_STATUS, {
     client: ridesClient,
-    context: {
-      headers: {
-        authorization: `Bearer ${accessToken}`
-      }
-    },
-    skip: !accessToken || userLoading || !userData?.me?.isDriver || isDriverView
+    fetchPolicy: 'network-only',
   });
 
-  const { data: passengerActiveRidesData, loading: passengerActiveLoading } = useQuery(GET_USER_RIDES_BY_STATUS, {
-    variables: { status: "IN_PROGRESS" },
+  const [fetchPassengerActiveRides, { data: passengerActiveRidesData, loading: passengerActiveLoading }] = useLazyQuery(GET_USER_RIDES_BY_STATUS, {
     client: ridesClient,
-    context: {
-      headers: {
-        authorization: `Bearer ${accessToken}`
-      }
-    },
-    skip: !accessToken || userLoading || !userData?.me?.isDriver || isDriverView
+    fetchPolicy: 'network-only',
   });
 
-  const { data: driverUpcomingRidesData, loading: driverUpcomingLoading } = useQuery(GET_DRIVER_RIDES_BY_STATUS, {
-    variables: { status: "PENDING" },
+  const [fetchDriverUpcomingRides, { data: driverUpcomingRidesData, loading: driverUpcomingLoading }] = useLazyQuery(GET_DRIVER_RIDES_BY_STATUS, {
     client: ridesClient,
-    context: {
-      headers: {
-        authorization: `Bearer ${accessToken}`
-      }
-    },
-    skip: !accessToken || userLoading || !userData?.me?.isDriver || !isDriverView
+    fetchPolicy: 'network-only',
   });
 
-  const { data: driverActiveRidesData, loading: driverActiveLoading } = useQuery(GET_DRIVER_RIDES_BY_STATUS, {
-    variables: { status: "IN_PROGRESS" },
+  const [fetchDriverActiveRides, { data: driverActiveRidesData, loading: driverActiveLoading }] = useLazyQuery(GET_DRIVER_RIDES_BY_STATUS, {
     client: ridesClient,
-    context: {
-      headers: {
-        authorization: `Bearer ${accessToken}`
-      }
-    },
-    skip: !accessToken || userLoading || !userData?.me?.isDriver || !isDriverView
+    fetchPolicy: 'network-only',
   });
 
   useEffect(() => {
@@ -214,7 +190,36 @@ export default function DashboardPage() {
       router.push('/login');
       return;
     }
-  }, [accessToken, router]);
+
+    // Ensure all fetch functions are defined before calling them
+    if (!userLoading && userData?.me && 
+        fetchPassengerUpcomingRides && fetchPassengerActiveRides &&
+        fetchDriverUpcomingRides && fetchDriverActiveRides) {
+      const context = { headers: { authorization: `Bearer ${accessToken}` } };
+      
+      if (isDriverView && userData.me.isDriver) {
+        fetchDriverUpcomingRides({
+          variables: { status: "PENDING" },
+          context,
+        });
+        fetchDriverActiveRides({
+          variables: { status: "IN_PROGRESS" },
+          context,
+        });
+      } else { // Passenger view or user is not a driver (so can only be passenger)
+        fetchPassengerUpcomingRides({
+          variables: { status: "PENDING" },
+          context,
+        });
+        fetchPassengerActiveRides({
+          variables: { status: "IN_PROGRESS" },
+          context,
+        });
+      }
+    }
+  }, [accessToken, router, userLoading, userData, isDriverView, 
+      fetchDriverActiveRides, fetchDriverUpcomingRides, 
+      fetchPassengerActiveRides, fetchPassengerUpcomingRides]);
 
   const isLoading = userLoading || (driverUpcomingLoading || driverActiveLoading || passengerUpcomingLoading || passengerActiveLoading);
 

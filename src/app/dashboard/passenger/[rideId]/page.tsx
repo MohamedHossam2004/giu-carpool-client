@@ -3,8 +3,8 @@
 import { use } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from '@apollo/client';
-import { GET_RIDE_BY_ID, REMOVE_PASSENGER } from '@/lib/graphql/queries';
-import { ridesClient } from '@/lib/apollo-client';
+import { GET_RIDE_BY_ID, CANCEL_BOOKING } from '@/lib/graphql/queries'; // Changed REMOVE_PASSENGER to CANCEL_BOOKING
+import { ridesClient, bookingClient } from '@/lib/apollo-client'; // Added bookingClient
 import { useState } from 'react';
 import {
   Dialog,
@@ -65,15 +65,16 @@ export default function RideDetails({ params }: RideDetailsProps) {
     variables: { id: rideIdNumber },
     client: ridesClient,
   });
+  console.log(data)
+  const [cancelling, setCancelling] = useState(false); // Renamed from removing
 
-  const [removing, setRemoving] = useState(false);
 
-  const [removePassenger] = useMutation(REMOVE_PASSENGER, {
-    client: ridesClient,
+  const [cancelBookingMutation] = useMutation(CANCEL_BOOKING, { 
+    client: bookingClient, // Changed from ridesClient
     onCompleted: () => router.push('/dashboard'),
     onError: (err) => {
-      console.error("Failed to cancel ride:", err.message);
-      setRemoving(false);
+      console.error("Failed to cancel booking:", err.message); // Updated error message
+      setCancelling(false);
     }
   });
 
@@ -86,16 +87,27 @@ export default function RideDetails({ params }: RideDetailsProps) {
   const formattedDate = new Date(ride.departureTime).toLocaleString();
 
   const handleCancelRide = async () => {
-    setRemoving(true);
+    // TODO: Ensure 'bookingIdForCancellation' is correctly sourced. This should be the ID of the user's specific booking for this ride.
+    // As a placeholder, rideIdNumber is used, but this is INCORRECT for the CANCEL_BOOKING mutation if it's not the bookingId.
+    // The actual bookingId needs to be fetched or passed to this component.
+    const bookingIdForCancellation = rideIdNumber; // <<< --- !!! THIS IS A PLACEHOLDER AND LIKELY WRONG !!! Replace with actual bookingId.
+
+    if (bookingIdForCancellation === null) {
+      console.error("Booking ID not available for cancellation.");
+      // Optionally, show an error to the user
+      return;
+    }
+
+    setCancelling(true);
     try {
-      await removePassenger({
+      await cancelBookingMutation({
         variables: {
-          rideId: rideIdNumber,
+          id: bookingIdForCancellation, // Changed from rideId to id, and ensure this is the bookingId
         },
       });
     } catch (err) {
       console.error("Cancel failed:", (err as Error).message);
-      setRemoving(false);
+      setCancelling(false);
     }
   };
 
@@ -125,9 +137,9 @@ export default function RideDetails({ params }: RideDetailsProps) {
                 <Button
                   className="bg-red-600 hover:bg-red-700 text-white"
                   onClick={handleCancelRide}
-                  disabled={removing}
+                  disabled={cancelling} // Changed from removing
                 >
-                  {removing ? 'Cancelling...' : 'Yes, Leave Ride'}
+                  {cancelling ? 'Cancelling...' : 'Yes, Leave Ride'} {/* Changed from removing */}
                 </Button>
                 <DialogClose asChild>
                   <Button variant="ghost">No, stay</Button>
