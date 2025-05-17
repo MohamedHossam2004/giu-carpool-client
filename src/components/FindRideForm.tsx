@@ -21,22 +21,24 @@ export default function FindRideForm() {
   const [giuIsFrom, setGiuIsFrom] = useState(true)
   const [otherLocation, setOtherLocation] = useState("")
   const [formData, setFormData] = useState({
-    date: new Date(),
-    time: {
-      hours: new Date().getHours(),
-      minutes: new Date().getMinutes(),
-    },
+    date: new Date(), // Initial dummy value, will be updated in useEffect
   })
   const [girlsOnly, setGirlsOnly] = useState(false)
   const [dateOpen, setDateOpen] = useState(false)
-  const [timeOpen, setTimeOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [locations, setLocations] = useState<any[]>([])
   const [otherLocationId, setOtherLocationId] = useState<number | null>(null)
   const [gender, setGender] = useState<boolean | null>(null)
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
+    // Set initial date only on the client side after mount
+    const now = new Date();
+    setFormData({
+      date: now,
+    });
 
     const getLocations = async () => {
 
@@ -48,7 +50,7 @@ export default function FindRideForm() {
           },
           body: JSON.stringify({
             query:
-              `query getAreas { 
+              `query getAreas {
               getAreas {
                 id
                 name
@@ -129,309 +131,176 @@ export default function FindRideForm() {
     }
   }
 
-  const handleTimeChange = (hours: number, minutes: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      time: { hours, minutes },
-    }))
-  }
-
   const formatFormData = () => {
-    const combinedDate = new Date(formData.date)
-    combinedDate.setHours(formData.time.hours, formData.time.minutes, 0, 0)
-    return combinedDate.toISOString();
+    return new Date(formData.date).toISOString();
   }
 
   return (
-    <form className="max-w-4xl mx-auto">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div>
-          <h1 className="text-4xl font-bold mb-5">Find a ride</h1>
-          <p className="text-gray-600 mb-5 text-lg">Where are you going?</p>
+      <form className="max-w-5xl mx-auto px-6 py-8">
+        <div className="bg-white shadow-lg rounded-xl p-8 border border-gray-100">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            <div>
+              <h1 className="text-4xl font-bold mb-5 text-gray-900">Find a ride</h1>
+              <p className="text-gray-600 mb-8 text-lg">Where are you going?</p>
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4 flex items-start">
-              <AlertCircle className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-5 flex items-start">
+                  <AlertCircle className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
 
-          <div className="space-y-6">
-            <div className="flex items-center space-x-4">
-              <div className="flex-1">
-                <Label className="block mb-2 text-base">From</Label>
-                <div
-                  className={cn(
-                    "flex items-center px-4 py-3 h-[60px] rounded-md border border-input",
-                    giuIsFrom ? "bg-orange-50 border-orange-200" : "bg-gray-50",
-                  )}
-                >
-                  <div className="font-medium text-base">
-                    {giuIsFrom ? "GIU Campus" : otherLocation || "Select location"}
+              <div className="space-y-6">
+                <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4">
+                  <div className="flex-1 w-full">
+                    <Label className="block mb-2 text-base font-medium text-gray-700">From</Label>
+                    <div
+                      className={cn(
+                        "flex items-center px-4 py-3 h-[60px] rounded-md border shadow-sm transition-all",
+                        giuIsFrom ? "bg-orange-50 border-orange-300 shadow-orange-100" : "bg-gray-50 hover:border-gray-300",
+                      )}
+                    >
+                      <div className="font-medium text-base">
+                        {giuIsFrom ? "GIU Campus" : otherLocation || "Select location"}
+                      </div>
+                    </div>
                   </div>
+
+                  <div className="pt-0 md:pt-6">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={toggleDirection}
+                      className="rounded-full h-12 w-12 flex items-center justify-center border-orange-200 hover:bg-orange-50 hover:border-orange-300 transition-all shadow-sm"
+                    >
+                      <ArrowLeftRight className="h-5 w-5 text-orange-500" />
+                    </Button>
+                  </div>
+
+                  <div className="flex-1 w-full">
+                    <Label className="block mb-2 text-base font-medium text-gray-700">To</Label>
+                    <div
+                      className={cn(
+                        "flex items-center px-4 py-3 h-[60px] rounded-md border shadow-sm transition-all",
+                        !giuIsFrom ? "bg-orange-50 border-orange-300 shadow-orange-100" : "bg-gray-50 hover:border-gray-300",
+                      )}
+                    >
+                      <div className="font-medium text-base">
+                        {!giuIsFrom ? "GIU Campus" : otherLocation || "Select location"}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="otherLocation" className="block mb-2 text-base font-medium text-gray-700">
+                    Other Location
+                  </Label>
+                  <Select value={otherLocation} onValueChange={handleOtherLocationChange}>
+                    <SelectTrigger id="otherLocation" className="w-full bg-gray-50 text-base py-6 border shadow-sm hover:border-gray-300 transition-all">
+                      <SelectValue placeholder="Select location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {locations.length > 0 && locations.map((location) => (
+                        <SelectItem key={location.id} value={location.name}>
+                          {location.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
-              <div className="pt-8">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={toggleDirection}
-                  className="rounded-full h-10 w-10 flex items-center justify-center border-orange-200 hover:bg-orange-50"
-                >
-                  <ArrowLeftRight className="h-5 w-5 text-orange-500" />
-                </Button>
-              </div>
-
-              <div className="flex-1">
-                <Label className="block mb-2 text-base">To</Label>
-                <div
-                  className={cn(
-                    "flex items-center px-4 py-3 h-[60px] rounded-md border border-input",
-                    !giuIsFrom ? "bg-orange-50 border-orange-200" : "bg-gray-50",
-                  )}
-                >
-                  <div className="font-medium text-base">
-                    {!giuIsFrom ? "GIU Campus" : otherLocation || "Select location"}
+              <div className="mt-10">
+                <h2 className="text-3xl font-bold mb-5">
+                  Pick a Date
+                </h2>
+                <div className="space-y-6">
+                  <div>
+                    <Label htmlFor="date" className="block mb-2 text-base">
+                      Date
+                    </Label>
+                    <Popover open={dateOpen} onOpenChange={setDateOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          id="date"
+                          variant="outline"
+                          className="w-full justify-start text-left font-normal bg-gray-50 text-base py-6 h-auto"
+                        >
+                          <CalendarIcon className="mr-2 h-5 w-5" />
+                          {format(formData.date, "PPP")}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-4" align="start">
+                        <div className="flex flex-col space-y-4">
+                          <Calendar size={20} />
+                          <DatePicker
+                            selected={formData.date}
+                            onChange={(date) => handleDateChange(date as Date)}
+                            dateFormat="yyyy-MM-dd"
+                            className="border p-2 rounded"
+                          />
+                          <div className="mt-6 flex justify-center">
+                            <Button onClick={() => setDateOpen(false)}>Done</Button>
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
               </div>
             </div>
 
             <div>
-              <Label htmlFor="otherLocation" className="block mb-2 text-base">
-                Other Location
-              </Label>
-              <Select value={otherLocation} onValueChange={handleOtherLocationChange}>
-                <SelectTrigger id="otherLocation" className="w-full bg-gray-50 text-base py-6">
-                  <SelectValue placeholder="Select location" />
-                </SelectTrigger>
-                <SelectContent>
-                  {locations.length > 0 && locations.map((location) => (
-                    <SelectItem key={location.id} value={location.name}>
-                      {location.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+              <h2 className="text-4xl font-bold mb-5">Ride preferences</h2>
+              <p className="text-gray-600 mb-6 text-lg">Additional options</p>
 
-          <div className="mt-14">
-            <h2 className="text-3xl font-bold mb-5">
-              Pick a Date
-              <br />
-              and Time?
-            </h2>
-            <div className="space-y-6">
-              <div>
-                <Label htmlFor="date" className="block mb-2 text-base">
-                  Date
+              <div className="mt-8 flex items-center justify-between">
+                <Label htmlFor="girlsOnly" className="font-medium text-base">
+                  Girls-Only Ride
                 </Label>
-                <Popover open={dateOpen} onOpenChange={setDateOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      id="date"
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal bg-gray-50 text-base py-6 h-auto"
-                    >
-                      <CalendarIcon className="mr-2 h-5 w-5" />
-                      {format(formData.date, "PPP")}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <div className="p-3">
-                      <Calendar size={20} />
-                      <DatePicker
-                        selected={formData.date}
-                        onChange={(date) => handleDateChange(date as Date)}
-                        dateFormat="yyyy-MM-dd"
-                        className="border p-2 rounded"
-                      />
-                      <div className="mt-4 flex justify-end">
-                        <Button onClick={() => setDateOpen(false)}>Done</Button>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div>
-                <Label htmlFor="time" className="block mb-2 text-base">
-                  Time
-                </Label>
-                <Popover open={timeOpen} onOpenChange={setTimeOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      id="time"
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal bg-gray-50 text-base py-6 h-auto"
-                    >
-                      <Clock className="mr-2 h-5 w-5" />
-                      {format(new Date().setHours(formData.time.hours, formData.time.minutes), "h:mm a")}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-4" align="start">
-                    <div className="flex flex-col space-y-6">
-                      <div className="grid grid-cols-3 gap-6 items-center">
-                        {/* Hours */}
-                        <div className="flex flex-col items-center">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                              const newHours = formData.time.hours >= 23 ? 0 : formData.time.hours + 1
-                              handleTimeChange(newHours, formData.time.minutes)
-                            }}
-                            className="rounded-full w-8 h-8"
-                          >
-                            <ChevronUp className="h-4 w-4" />
-                          </Button>
-                          <div className="h-12 flex items-center justify-center text-xl my-2">
-                            {String(formData.time.hours).padStart(2, "0")}
-                          </div>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                              const newHours = formData.time.hours <= 0 ? 23 : formData.time.hours - 1
-                              handleTimeChange(newHours, formData.time.minutes)
-                            }}
-                            className="rounded-full w-8 h-8"
-                          >
-                            <ChevronDown className="h-4 w-4" />
-                          </Button>
-                          <span className="text-xs mt-1">Hours</span>
-                        </div>
-
-                        <div className="text-center text-2xl font-bold">:</div>
-
-                        {/* Minutes */}
-                        <div className="flex flex-col items-center">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                              const newMinutes = formData.time.minutes >= 59 ? 0 : formData.time.minutes + 1
-                              handleTimeChange(formData.time.hours, newMinutes)
-                            }}
-                            className="rounded-full w-8 h-8"
-                          >
-                            <ChevronUp className="h-4 w-4" />
-                          </Button>
-                          <div className="h-12 flex items-center justify-center text-xl my-2">
-                            {String(formData.time.minutes).padStart(2, "0")}
-                          </div>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                              const newMinutes = formData.time.minutes <= 0 ? 59 : formData.time.minutes - 1
-                              handleTimeChange(formData.time.hours, newMinutes)
-                            }}
-                            className="rounded-full w-8 h-8"
-                          >
-                            <ChevronDown className="h-4 w-4" />
-                          </Button>
-                          <span className="text-xs mt-1">Minutes</span>
-                        </div>
-                      </div>
-
-                      {/* AM/PM Toggle */}
-                      <div className="flex justify-center">
-                        <div className="flex rounded-md overflow-hidden">
-                          <Button
-                            type="button"
-                            variant={formData.time.hours < 12 ? "default" : "outline"}
-                            onClick={() => {
-                              if (formData.time.hours >= 12) {
-                                handleTimeChange(formData.time.hours - 12, formData.time.minutes)
-                              }
-                            }}
-                            className={cn(
-                              "rounded-none rounded-l-md",
-                              formData.time.hours < 12 ? "bg-orange-400 hover:bg-orange-500" : "",
-                            )}
-                          >
-                            AM
-                          </Button>
-                          <Button
-                            type="button"
-                            variant={formData.time.hours >= 12 ? "default" : "outline"}
-                            onClick={() => {
-                              if (formData.time.hours < 12) {
-                                handleTimeChange(formData.time.hours + 12, formData.time.minutes)
-                              }
-                            }}
-                            className={cn(
-                              "rounded-none rounded-r-md",
-                              formData.time.hours >= 12 ? "bg-orange-400 hover:bg-orange-500" : "",
-                            )}
-                          >
-                            PM
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="flex justify-end">
-                        <Button onClick={() => setTimeOpen(false)}>Done</Button>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                <Switch
+                  id="girlsOnly"
+                  checked={girlsOnly}
+                  onCheckedChange={setGirlsOnly}
+                  disabled={gender ? gender : false}
+                  className="data-[state=checked]:bg-orange-400"
+                />
               </div>
             </div>
           </div>
-        </div>
 
-        <div>
-          <h2 className="text-4xl font-bold mb-5">Ride preferences</h2>
-          <p className="text-gray-600 mb-5 text-lg">Additional options</p>
+          <div className="mt-10 flex justify-center">
+            {otherLocation ?
+              <Link
+                href={{ pathname: "/ride-results", query: { date: formatFormData(), girlsOnly, otherLocation, otherLocationId, giuIsFrom } }}
 
-          <div className="mt-10 flex items-center justify-between">
-            <Label htmlFor="girlsOnly" className="font-medium text-base">
-              Girls-Only Ride
-            </Label>
-            <Switch
-              id="girlsOnly"
-              checked={girlsOnly}
-              onCheckedChange={setGirlsOnly}
-              disabled={gender ? gender : false}
-              className="data-[state=checked]:bg-orange-400"
-            />
+              >
+                <Button
+                  type="submit"
+                  className="bg-orange-400 hover:bg-orange-500 text-white px-14 py-7 rounded-full text-xl font-medium"
+                  disabled={!!error}
+                  onClick={handleSearch}
+                >
+                  {loading ? (
+                    <LoaderCircle className="animate-spin" size={20} />
+                  ) : (
+                    'Search'
+                  )}
+                </Button>
+              </Link>
+              :
+              <Button
+                type="submit"
+                className="bg-orange-400 hover:bg-orange-500 text-white px-14 py-7 rounded-full text-xl font-medium"
+                disabled={true}
+              >
+                Search
+              </Button>
+            }
           </div>
-        </div>
-      </div>
-
-      <div className="mt-14 flex justify-center">
-        {otherLocation ?
-          <Link
-            href={{ pathname: "/ride-results", query: { date: formatFormData(), girlsOnly, otherLocation, otherLocationId, giuIsFrom } }}
-
-          >
-            <Button
-              type="submit"
-              className="bg-orange-400 hover:bg-orange-500 text-white px-14 py-7 rounded-full text-xl font-medium"
-              disabled={!!error}
-              onClick={handleSearch}
-            >
-              {loading ? (
-                <LoaderCircle className="animate-spin" size={20} />
-              ) : (
-                'Search'
-              )}
-            </Button>
-          </Link>
-          :
-          <Button
-            type="submit"
-            className="bg-orange-400 hover:bg-orange-500 text-white px-14 py-7 rounded-full text-xl font-medium"
-            disabled={true}
-          >
-            Search
-          </Button>
-        }
-      </div>
-    </form>
-  )
+          </div>
+      </form>
+  );
 }

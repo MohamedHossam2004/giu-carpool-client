@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft } from "lucide-react"
+import { AlertCircle, ChevronLeft, MapPin, Users, Car } from "lucide-react"
 import dynamic from "next/dynamic"
 const Image = dynamic(() => import("next/image"), { ssr: false })
 import { RiderDetailsDialog } from "@/components/rider-details-dialog"
@@ -12,6 +12,7 @@ import { MeetingPointsDialog } from "@/components/meeting-points-dialog"
 import { useSearchParams } from "next/navigation"
 import { useToast } from "@/components/ui/use-toast"
 import Cookies from "js-cookie"
+import { format } from "date-fns"
 
 interface MeetingPoint {
   meetingPoint: {
@@ -45,6 +46,7 @@ function SearchResultsContent() {
   const giuIsFrom = searchParams.get("giuIsFrom")
   const date = searchParams.get("date")
   const [rides, setRides] = useState<Ride[]>([])
+  const [loading, setLoading] = useState(true);
   const avatarSrc = "./marker-icon-2x.png"
   const girlsOnly = searchParams.get("girlsOnly")
   const otherLocationId = searchParams.get("otherLocationId")
@@ -138,6 +140,8 @@ function SearchResultsContent() {
           description: "Failed to fetch rides. Please try again.",
           variant: "destructive",
         })
+      } finally {
+        setLoading(false);
       }
     }
 
@@ -150,24 +154,42 @@ function SearchResultsContent() {
   }
 
   return (
-    <div className="flex-1 p-6">
-      <div className="mb-6">
-        <Button variant="ghost" size="icon" onClick={handleBackClick} className="h-10 w-10 text-amber-500">
-          <ChevronLeft className="h-8 w-8" />
+    <div className="flex-1 p-6 max-w-6xl mx-auto">
+      <div className="mb-8 flex items-center">
+        <Button variant="ghost" size="icon" onClick={handleBackClick} className="h-10 w-10 text-[#F28C28] mr-3 hover:bg-orange-50">
+          <ChevronLeft className="h-6 w-6" />
         </Button>
+        <h1 className="text-3xl font-bold text-gray-900">Available Rides</h1>
       </div>
 
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold">Result</h1>
-        <div className="text-sm text-muted-foreground mt-1">
-          <p>Filter:</p>
-          <p className="ml-4">Date: {date ? new Date(date).toLocaleDateString() : "Not specified"}</p>
-          <p className="ml-4">Girls-Only Ride: {girlsOnly === "true" ? "Yes" : "No"}</p>
+      <div className="mb-8 bg-white shadow-md rounded-xl p-6 border border-gray-100">
+        <h2 className="text-xl font-semibold mb-4 text-gray-800">Search Filters</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <div>
+              <span className="text-sm font-medium text-gray-700">Date:</span>
+              <span className="ml-2 text-sm">{date ? format(new Date(date), 'dd/MM/yyyy') : "Not specified"}</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <Users className="h-5 w-5 text-blue-600" />
+            <div>
+              <span className="text-sm font-medium text-gray-700">Girls-Only Ride:</span>
+              <span className="ml-2 text-sm">{girlsOnly === "true" ? "Yes" : "No"}</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="space-y-4">
-        {rides.length > 0 ? (
+      <div className="space-y-6">
+        {loading ? (
+          <div className="text-center py-12 bg-white shadow-md rounded-xl border border-gray-100">
+            <div className="mb-4 text-[#F28C28]">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+            </div>
+            <p className="text-gray-600 mb-4">Loading rides...</p>
+          </div>
+        ) : rides.length > 0 ? (
           rides.map((ride) => (
             <RideCard
               key={ride.id}
@@ -182,9 +204,12 @@ function SearchResultsContent() {
             />
           ))
         ) : (
-          <div className="text-center py-10">
-            <p className="text-muted-foreground">No rides found matching your criteria.</p>
-            <Button onClick={handleBackClick} className="mt-4 bg-orange-400 hover:bg-orange-500 text-white">
+          <div className="text-center py-12 bg-white shadow-md rounded-xl border border-gray-100">
+            <div className="mb-4 text-[#F28C28]">
+              <AlertCircle className="h-12 w-12 mx-auto" />
+            </div>
+            <p className="text-gray-600 mb-4">No rides found matching your criteria.</p>
+            <Button onClick={handleBackClick} className="mt-2 bg-amber-500 hover:bg-amber-600 text-white px-6 py-2 rounded-md font-medium">
               Modify Search
             </Button>
           </div>
@@ -311,59 +336,83 @@ function RideCard({ id, name, car, departureTime, availableSeats, avatarSrc, mee
   };
 
   return (
-    <Card className="overflow-hidden border cursor-pointer" onClick={handleViewRideDetails}>
-      <CardContent className="p-6 flex items-center gap-4">
-        <div className="relative">
-          <div className="w-20 h-20 rounded-full overflow-hidden bg-amber-100">
-            {typeof window !== "undefined" && (
-              <Image src={avatarSrc || "/placeholder.svg"} alt={name} width={80} height={80} className="object-cover" />
-            )}
-          </div>
-        </div>
-
-        <div className="flex-1">
-          <h3 className="text-lg font-medium">{name}</h3>
-          <p className="text-sm text-muted-foreground">Car: {car}</p>
-          <p className="text-sm text-muted-foreground">Departure Time: {departureTime}</p>
-          <p className="text-sm text-muted-foreground">Available Seats: {availableSeats}</p>
-
-          {selectedMeetingPoint && (
-            <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md text-sm text-green-800">
-              <p className="font-medium">Meeting Point: {selectedMeetingPoint.meetingPoint.name}</p>
-              <p>Price: {selectedMeetingPoint.price} EGP</p>
+    <Card className="overflow-hidden border border-gray-200 shadow-md hover:shadow-lg transition-all cursor-pointer bg-white" onClick={handleViewRideDetails}>
+      <CardContent className="p-0">
+        <div className="flex flex-col md:flex-row">
+          {/* Driver info section */}
+          <div className="p-6 md:w-1/3 bg-orange-50 border-r border-orange-100 flex flex-col items-center justify-center">
+            <div className="relative mb-3">
+              <div className="w-24 h-24 rounded-full overflow-hidden bg-blue-100 border-4 border-white shadow-md">
+                
+                  <Car className="h-full w-full text-[#F28C28] p-4" />
+                
+              </div>
             </div>
-          )}
-
-          <div className="mt-2 flex flex-wrap gap-2">
-            <Button
-              className="bg-amber-500 hover:bg-amber-600 text-white"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleViewRideDetails();
-              }}
-            >
-              View Details
-            </Button>
+            <h3 className="text-xl font-bold text-gray-800 text-center mb-1">{name}</h3>
+            <p className="text-sm text-gray-600 text-center mb-3">{car}</p>
+            <div className="flex items-center justify-center gap-1">
+              <div className="px-3 py-1 bg-amber-100 rounded-full text-amber-800 text-xs font-medium">
+                {availableSeats} {availableSeats === 1 ? 'seat' : 'seats'} available
+              </div>
+            </div>
           </div>
-
-          <RiderDetailsDialog
-            open={detailsDialogOpen}
-            onOpenChange={setDetailsDialogOpen}
-            driverId={driverId}
-            driverName={name}
-            driverAvatar={avatarSrc}
-          />
-
-          <MeetingPointsDialog
-            open={meetingPointsDialogOpen}
-            onOpenChange={setMeetingPointsDialogOpen}
-            meetingPoints={meetingPoints}
-            onConfirm={handleJoinRide}
-            rideId={id}
-          />
+          
+          {/* Ride details section */}
+          <div className="p-6 md:w-2/3 flex flex-col justify-between">
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Departure Time</p>
+                  <p className="text-base">{departureTime}</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <MapPin className="h-5 w-5 text-[#F28C28] mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Meeting Points</p>
+                  <p className="text-base">{meetingPoints.length} available</p>
+                </div>
+              </div>
+              
+              {selectedMeetingPoint && (
+                <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-md text-green-800">
+                  <p className="font-medium">Selected: {selectedMeetingPoint.meetingPoint.name}</p>
+                  <p>Price: {selectedMeetingPoint.price} EGP</p>
+                </div>
+              )}
+            </div>
+            
+            <div className="mt-6 flex justify-end">
+              <Button
+                className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-2 rounded-md font-medium transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleViewRideDetails();
+                }}
+              >
+                View Details
+              </Button>
+            </div>
+          </div>
         </div>
       </CardContent>
+
+      <RiderDetailsDialog
+        open={detailsDialogOpen}
+        onOpenChange={setDetailsDialogOpen}
+        driverId={driverId}
+        driverName={name}
+        driverAvatar={avatarSrc}
+      />
+
+      <MeetingPointsDialog
+        open={meetingPointsDialogOpen}
+        onOpenChange={setMeetingPointsDialogOpen}
+        meetingPoints={meetingPoints}
+        onConfirm={handleJoinRide}
+        rideId={id}
+      />
     </Card>
   )
 }

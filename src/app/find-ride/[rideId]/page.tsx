@@ -270,9 +270,11 @@ function PassengerRideDetailsContent({ params }: RideDetailsProps) {
                   <DialogDescription>
                     {selectedMeetingPoint && (
                       <>
-                        <div className="mt-2">Meeting Point: <strong>{selectedMeetingPoint.meetingPoint.name}</strong></div>
-                        <div>Price: <strong>EGP {selectedMeetingPoint.price}</strong></div>
-                        <div className="mt-2">You will be redirected to the payment page after confirmation.</div>
+                        Meeting Point: <strong>{selectedMeetingPoint.meetingPoint.name}</strong>
+                        <br />
+                        Price: <strong>EGP {selectedMeetingPoint.price}</strong>
+                        <br />
+                        You will be redirected to the payment page after confirmation.
                       </>
                     )}
                   </DialogDescription>

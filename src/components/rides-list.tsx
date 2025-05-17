@@ -113,6 +113,9 @@ function ReviewDialog({ rideId, driverId, onReviewSubmit }: ReviewDialogProps) {
     <DialogContent className="sm:max-w-md">
       <DialogHeader>
         <DialogTitle>Leave a Review</DialogTitle>
+        <div className="text-sm text-muted-foreground mt-2">
+          Share your experience...
+        </div>
       </DialogHeader>
       <div className="space-y-4 py-4">
         <div className="space-y-2">
@@ -153,8 +156,7 @@ function ReviewDialog({ rideId, driverId, onReviewSubmit }: ReviewDialogProps) {
 }
 
 function RideItem({ booking }: { booking: Booking }) {
-  const date = new Date(parseInt(booking.ride.departure_time));
-  const formattedDate = format(date, 'dd/MM/yyyy, HH:mm');
+  const [formattedDate, setFormattedDate] = useState('');
   const isCompleted = booking.ride.status?.toUpperCase() === 'COMPLETED';
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
@@ -163,6 +165,9 @@ function RideItem({ booking }: { booking: Booking }) {
   const userId = Cookies.get('user') ? JSON.parse(Cookies.get('user')!).id : null;
 
   useEffect(() => {
+    const date = new Date(parseInt(booking.ride.departure_time));
+    setFormattedDate(format(date, 'dd/MM/yyyy, HH:mm'));
+
     const fetchReviews = async () => {
       if (!userId) return;
 
