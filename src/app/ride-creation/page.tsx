@@ -84,16 +84,26 @@ export default function CreateRidePage() {
     if (!cachedRides) return true;
 
     const rides = JSON.parse(cachedRides);
-    const toGIURides = rides.filter((ride: any) => ride.toGIU);
-    const fromGIURides = rides.filter((ride: any) => !ride.toGIU);
+    const selectedDate = new Date(departureTime);
+    
+    // Filter rides for the same day, handling timezone conversion
+    const sameDayRides = rides.filter((ride: any) => {
+      const rideDate = new Date(parseInt(ride.departureTime));
+      const rideDateStr = rideDate.toLocaleDateString();
+      const selectedDateStr = selectedDate.toLocaleDateString();
+      return rideDateStr === selectedDateStr;
+    });
+
+    const toGIURides = sameDayRides.filter((ride: any) => ride.toGIU);
+    const fromGIURides = sameDayRides.filter((ride: any) => !ride.toGIU);
 
     if (toGIURides.length >= 1 && toGIU) {
-      setError('You already have a ride to GIU. You can only create one ride to GIU at a time.');
+      setError('You already have a ride to GIU for this day. You can only create one ride to GIU per day.');
       return false;
     }
 
     if (fromGIURides.length >= 1 && !toGIU) {
-      setError('You already have a ride from GIU. You can only create one ride from GIU at a time.');
+      setError('You already have a ride from GIU for this day. You can only create one ride from GIU per day.');
       return false;
     }
 
