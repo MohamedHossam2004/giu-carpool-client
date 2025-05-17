@@ -104,23 +104,31 @@ export default function AuthPage() {
           loading="eager"
           sizes="(max-width: 768px) 100vw, 60vw"
         />
+        <div className="absolute inset-0 bg-black/50 z-10 flex flex-col items-center justify-end text-white p-8 pb-32">
+          <h2 className="text-4xl font-bold mb-6 text-center">University Car Pooling App</h2>
+          <p className="text-xl text-center max-w-lg leading-relaxed">
+            Welcome to GIU's Carpooling Platform! Connect with fellow students and alumni for convenient, eco-friendly rides to campus.
+          </p>
+        </div>
       </div>
 
       {/* Right side - Auth forms */}
-      <div className="flex w-full flex-col items-center justify-center bg-[#ff9d4d] px-6 py-4 md:w-2/5">
+      <div className="flex w-full flex-col items-center justify-center bg-background px-6 py-4 md:w-2/5">
         <div className="w-full max-w-md">
           {/* Logo */}
           <div className="mb-6 flex flex-col items-center">
-            <div className="mb-3">
-              <Image src="/logo.png" alt="GIU Logo" width={200} height={75} priority />
+            <div className="mb-4">
+              <Image src="/logo.png" alt="GIU Logo" width={220} height={82} priority />
             </div>
-            <h1 className="text-xl font-bold text-gray-800">GIU Car Pooling App</h1>
+            <h1 className="text-3xl font-semibold text-foreground">
+              {authMode === "login" ? "Welcome to GIU Carpooling" : "Create your account"}
+            </h1>
           </div>
 
           {/* Auth Content */}
-          <div className="space-y-4 bg-white rounded-xl p-6 shadow-lg">
+          <div className="space-y-3 bg-card rounded-xl p-6 shadow-lg border border-border">
             {/* Title */}
-            <div className="text-center text-base font-medium text-gray-700 mb-2">
+            <div className="text-center text-base font-medium text-muted-foreground mb-3">
               {showVerification || registrationStep === "verification"
                 ? "Enter the verification code"
                 : authMode === "login"
@@ -132,16 +140,16 @@ export default function AuthPage() {
 
             {/* User Type Toggle */}
             {!showVerification && registrationStep !== "verification" && (authMode === "login" || (authMode === "register" && registrationStep === "personal")) && (
-              <div className="flex items-center justify-center space-x-8 py-2">
+              <div className="flex items-center justify-center space-x-8 py-1">
                 <div className="flex items-center space-x-2">
                   <div
                     className={cn(
                       "flex h-5 w-5 items-center justify-center rounded-full border-2",
-                      userType === "student" ? "border-black bg-black" : "border-gray-400",
+                      userType === "student" ? "border-primary bg-primary" : "border-muted",
                     )}
                     onClick={() => setUserType("student")}
                   >
-                    {userType === "student" && <div className="h-2 w-2 rounded-full bg-white" />}
+                    {userType === "student" && <div className="h-2 w-2 rounded-full bg-primary-foreground" />}
                   </div>
                   <Label htmlFor="student" className="cursor-pointer text-sm font-medium" onClick={() => setUserType("student")}>
                     Student
@@ -151,11 +159,11 @@ export default function AuthPage() {
                   <div
                     className={cn(
                       "flex h-5 w-5 items-center justify-center rounded-full border-2",
-                      userType === "alumni" ? "border-black bg-black" : "border-gray-400",
+                      userType === "alumni" ? "border-primary bg-primary" : "border-muted",
                     )}
                     onClick={() => setUserType("alumni")}
                   >
-                    {userType === "alumni" && <div className="h-2 w-2 rounded-full bg-white" />}
+                    {userType === "alumni" && <div className="h-2 w-2 rounded-full bg-primary-foreground" />}
                   </div>
                   <Label htmlFor="alumni" className="cursor-pointer text-sm font-medium" onClick={() => setUserType("alumni")}>
                     Alumni
@@ -204,12 +212,12 @@ export default function AuthPage() {
 
         {/* Login/Register Toggle - Fixed at bottom */}
         {!showVerification && registrationStep !== "verification" && (
-          <div className="flex justify-center w-full mt-6">
-            <div className="inline-flex rounded-lg bg-white p-1.5 shadow-md">
+          <div className="flex justify-center w-full mt-4">
+            <div className="inline-flex rounded-lg bg-muted p-1.5">
               <button
                 className={cn(
                   "rounded-md px-6 py-2 text-sm font-medium transition-all",
-                  authMode === "login" ? "bg-[#ff9d4d] text-white shadow-sm" : "text-gray-600 hover:text-gray-800",
+                  authMode === "login" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
                 )}
                 onClick={() => setAuthMode("login")}
               >
@@ -218,7 +226,7 @@ export default function AuthPage() {
               <button
                 className={cn(
                   "rounded-md px-6 py-2 text-sm font-medium transition-all",
-                  authMode === "register" ? "bg-[#ff9d4d] text-white shadow-sm" : "text-gray-600 hover:text-gray-800",
+                  authMode === "register" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
                 )}
                 onClick={() => setAuthMode("register")}
               >

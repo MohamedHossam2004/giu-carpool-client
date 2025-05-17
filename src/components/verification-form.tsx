@@ -53,7 +53,7 @@ export default function VerificationForm({ onVerify, type }: VerificationFormPro
       exit={{ opacity: 0, y: -10 }}
       transition={{ duration: 0.2 }}
     >
-      <div className="space-y-3">
+      <div className="space-y-6">
         <div className="text-center text-sm text-gray-600">
           {type === "login" 
             ? "We've sent a verification code to your email. Please enter it below to sign in."
@@ -61,7 +61,7 @@ export default function VerificationForm({ onVerify, type }: VerificationFormPro
             ? "We've sent a verification code to your email. Please enter it below to complete your registration."
             : "We've sent a verification code to your email. Please enter it below to complete your driver registration."}
         </div>
-        <div className="flex justify-center space-x-2">
+        <div className="flex justify-center space-x-3">
           {code.map((digit, index) => (
             <Input
               key={index}
@@ -73,12 +73,12 @@ export default function VerificationForm({ onVerify, type }: VerificationFormPro
               value={digit}
               onChange={(e) => handleChange(index, e.target.value)}
               onKeyDown={(e) => handleKeyDown(index, e)}
-              className="w-12 h-12 text-center text-lg bg-white"
+              className="w-12 h-12 text-center text-lg bg-white border-gray-200 focus:border-black focus:ring-black"
             />
           ))}
         </div>
         <Button 
-          className="w-full bg-black text-white hover:bg-gray-800 h-8 text-sm"
+          className="w-full bg-black text-white hover:bg-gray-800 h-10 text-sm font-medium"
           onClick={handleSubmit}
         >
           Verify
