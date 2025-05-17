@@ -153,7 +153,6 @@ function RideCard({ ride, isDriverView = false }: { ride: Ride; isDriverView?: b
 export default function DashboardPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"upcoming" | "active">("upcoming");
-  const [isDriverView, setIsDriverView] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const accessToken = Cookies.get('accessToken');
@@ -164,6 +163,7 @@ export default function DashboardPage() {
       }
     }
   });
+  const isDriver = userData?.me?.isDriver;
 
   const [fetchPassengerUpcomingRides, { data: passengerUpcomingRidesData, loading: passengerUpcomingLoading }] = useLazyQuery(GET_USER_RIDES_BY_STATUS, {
     client: ridesClient,
@@ -197,7 +197,7 @@ export default function DashboardPage() {
         fetchDriverUpcomingRides && fetchDriverActiveRides) {
       const context = { headers: { authorization: `Bearer ${accessToken}` } };
       
-      if (isDriverView && userData.me.isDriver) {
+      if (isDriver) {
         fetchDriverUpcomingRides({
           variables: { status: "PENDING" },
           context,
@@ -206,7 +206,7 @@ export default function DashboardPage() {
           variables: { status: "IN_PROGRESS" },
           context,
         });
-      } else { // Passenger view or user is not a driver (so can only be passenger)
+      } else {
         fetchPassengerUpcomingRides({
           variables: { status: "PENDING" },
           context,
@@ -217,14 +217,22 @@ export default function DashboardPage() {
         });
       }
     }
-  }, [accessToken, router, userLoading, userData, isDriverView, 
+  }, [accessToken, router, userLoading, userData, isDriver, 
       fetchDriverActiveRides, fetchDriverUpcomingRides, 
       fetchPassengerActiveRides, fetchPassengerUpcomingRides]);
 
+  // Cache driver's rides in localStorage
+  useEffect(() => {
+    if (isDriver && driverUpcomingRidesData?.getDriverRideByStatus) {
+      const rides = driverUpcomingRidesData.getDriverRideByStatus;
+      localStorage.setItem('driverRides', JSON.stringify(rides));
+    }
+  }, [isDriver, driverUpcomingRidesData]);
+
   const isLoading = userLoading || (driverUpcomingLoading || driverActiveLoading || passengerUpcomingLoading || passengerActiveLoading);
 
-  const upcomingRides = isDriverView ? driverUpcomingRidesData?.getDriverRideByStatus || [] : passengerUpcomingRidesData?.getUserRideByStatus || [];
-  const activeRides = isDriverView ? driverActiveRidesData?.getDriverRideByStatus || [] : passengerActiveRidesData?.getUserRideByStatus || [];
+  const upcomingRides = isDriver ? driverUpcomingRidesData?.getDriverRideByStatus || [] : passengerUpcomingRidesData?.getUserRideByStatus || [];
+  const activeRides = isDriver ? driverActiveRidesData?.getDriverRideByStatus || [] : passengerActiveRidesData?.getUserRideByStatus || [];
 
   if (isLoading) {
     return (
@@ -242,14 +250,8 @@ export default function DashboardPage() {
         {userData?.me?.isDriver && (
           <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
             <button
-              className={`px-3 py-1.5 rounded-md text-sm font-medium ${!isDriverView ? 'bg-white shadow-sm text-black' : 'text-gray-600'}`}
-              onClick={() => setIsDriverView(false)}
-            >
-              Passenger View
-            </button>
-            <button
-              className={`px-3 py-1.5 rounded-md text-sm font-medium ${isDriverView ? 'bg-white shadow-sm text-black' : 'text-gray-600'}`}
-              onClick={() => setIsDriverView(true)}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium ${isDriver ? 'bg-white shadow-sm text-black' : 'text-gray-600'}`}
+              onClick={() => router.push('/dashboard')}
             >
               Driver View
             </button>
@@ -285,7 +287,7 @@ export default function DashboardPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {upcomingRides.map((ride: Ride) => (
-                <RideCard key={ride.id} ride={ride} isDriverView={isDriverView} />
+                <RideCard key={ride.id} ride={ride} isDriverView={isDriver} />
               ))}
             </div>
           )}
@@ -300,7 +302,7 @@ export default function DashboardPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {activeRides.map((ride: Ride) => (
-                <RideCard key={ride.id} ride={ride} isDriverView={isDriverView} />
+                <RideCard key={ride.id} ride={ride} isDriverView={isDriver} />
               ))}
             </div>
           )}

@@ -75,7 +75,36 @@ export default function CreateRidePage() {
       return;
     }
     fetchAreas();
+    checkRideLimit();
   }, [data, authError, router, accessToken]);
+
+  const checkRideLimit = () => {
+    if (!data?.me?.isDriver) return;
+
+    const cachedRides = localStorage.getItem('driverRides');
+    if (!cachedRides) return;
+
+    const rides = JSON.parse(cachedRides);
+    const toGIURides = rides.filter((ride: any) => ride.toGIU);
+    const fromGIURides = rides.filter((ride: any) => !ride.toGIU);
+
+    if (toGIURides.length >= 1 && toGIU) {
+      setError('You already have a ride to GIU. You can only create one ride to GIU at a time.');
+      router.push('/dashboard');
+      return;
+    }
+
+    if (fromGIURides.length >= 1 && !toGIU) {
+      setError('You already have a ride from GIU. You can only create one ride from GIU at a time.');
+      router.push('/dashboard');
+      return;
+    }
+  };
+
+  const handleToGIUChange = (value: boolean) => {
+    setToGIU(value);
+    checkRideLimit();
+  };
 
   const fetchAreas = async () => {
     setLoading(true);
@@ -327,7 +356,7 @@ export default function CreateRidePage() {
                       onMeetingPointSelect={handleMeetingPointSelect}
                       onMeetingPointRemove={handleRemoveMeetingPoint}
                       getRemainingMeetingPoints={getRemainingMeetingPoints}
-                      onToGIUChange={setToGIU}
+                      onToGIUChange={handleToGIUChange}
                       onGirlsOnlyChange={setGirlsOnly}
                       onContinue={handleContinueToPrice}
                       departureTime={departureTime}
