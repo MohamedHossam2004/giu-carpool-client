@@ -16,6 +16,7 @@ import { ProgressBar } from "@/components/ride-creation/ProgressBar"
 import { RideDetailsForm } from "@/components/ride-creation/RideDetailsForm"
 import { PricingForm } from "@/components/ride-creation/PricingForm"
 import { VerificationForm } from "@/components/ride-creation/VerificationForm"
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 // Create Ride Mutation
 const CREATE_RIDE_MUTATION = gql`
@@ -300,64 +301,61 @@ export default function CreateRidePage() {
   }
 
   return (
-    <div className="flex h-screen bg-white">
-      <Sidebar />
-      <div className="flex-1 flex flex-col">
-        <Navbar />
-        <main className="flex-1 flex">
-          {currentStep === 'verification' ? (
-            <div className="flex-1 p-6 max-w-3xl mx-auto">
-              <div className="flex items-center gap-2 mb-6">
-                <Button variant="ghost" size="sm" className="p-0 h-8 w-8" onClick={() => setCurrentStep('pricing')}>
-                  <ArrowLeft className="h-5 w-5 text-black" />
-                </Button>
-                <h1 className="text-2xl font-bold text-black">Verify Ride Details</h1>
-              </div>
-              
-              <ProgressBar currentStep={currentStep} />
-
-              {success ? (
-                <div className="mt-8 p-6 bg-green-50 border border-green-200 rounded-lg text-center">
-                  <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-                  <h2 className="text-xl font-semibold text-black mb-2">Ride Created Successfully!</h2>
-                  <p className="text-gray-600 mb-6">Redirecting to dashboard...</p>
-                </div>
-              ) : (
-                <VerificationForm
-                  selectedArea={selectedArea}
-                  selectedMeetingPointIds={selectedMeetingPointIds}
-                  availableMeetingPoints={availableMeetingPoints}
-                  meetingPointPrices={meetingPointPrices}
-                  toGIU={toGIU}
-                  girlsOnly={girlsOnly}
-                  departureTime={departureTime}
-                  onBack={() => setCurrentStep('pricing')}
-                  onSubmit={handleCreateRide}
-                />
-              )}
-
-              {error && (
-                <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-2" />
-                  <span>{error}</span>
-                </div>
-              )}
-            </div>
-          ) : (
-            <>
-              <div className="w-[450px] p-6 border-r overflow-y-auto">
+    <ProtectedRoute driverOnly={true}>
+      <div className="flex h-screen bg-white">
+        <Sidebar />
+        <div className="flex-1 flex flex-col">
+          <Navbar />
+          <main className="flex-1 flex">
+            {currentStep === 'verification' ? (
+              <div className="flex-1 p-6 max-w-3xl mx-auto">
                 <div className="flex items-center gap-2 mb-6">
-                  {currentStep === 'pricing' && (
-                    <Button variant="ghost" size="sm" className="p-0 h-8 w-8" onClick={() => setCurrentStep('details')}>
-                      <ArrowLeft className="h-5 w-5 text-black" />
-                    </Button>
-                  )}
-                  <h1 className="text-2xl font-bold text-black">
-                    {currentStep === 'details' ? 'Create Ride' : 'Set Pricing'}
-                  </h1>
+                  <Button variant="ghost" size="sm" className="p-0 h-8 w-8" onClick={() => setCurrentStep('pricing')}>
+                    <ArrowLeft className="h-5 w-5 text-black" />
+                  </Button>
+                  <h1 className="text-2xl font-bold text-black">Verify Ride Details</h1>
                 </div>
                 
                 <ProgressBar currentStep={currentStep} />
+
+                {success ? (
+                  <div className="mt-8 p-6 bg-green-50 border border-green-200 rounded-lg text-center">
+                    <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+                    <h2 className="text-xl font-semibold text-black mb-2">Ride Created Successfully!</h2>
+                    <p className="text-gray-600 mb-6">Redirecting to dashboard...</p>
+                  </div>
+                ) : (
+                  <VerificationForm
+                    selectedArea={selectedArea}
+                    selectedMeetingPointIds={selectedMeetingPointIds}
+                    availableMeetingPoints={availableMeetingPoints}
+                    meetingPointPrices={meetingPointPrices}
+                    toGIU={toGIU}
+                    girlsOnly={girlsOnly}
+                    departureTime={departureTime}
+                    onBack={() => setCurrentStep('pricing')}
+                    onSubmit={handleCreateRide}
+                  />
+                )}
+
+                {error && (
+                  <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded flex items-center">
+                    <AlertCircle className="h-4 w-4 mr-2" />
+                    <span>{error}</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <div className="w-[450px] p-6 border-r overflow-y-auto">
+                  <div className="flex items-center gap-2 mb-6">
+                    {currentStep === 'pricing' && ( <Button variant="ghost" size="sm" className="p-0 h-8 w-8" onClick={() => setCurrentStep('details')}> <ArrowLeft className="h-5 w-5 text-black" /> </Button> )}
+                    <h1 className="text-2xl font-bold text-black">
+                      {currentStep === 'details' ? 'Create Ride' : 'Set Pricing'}
+                    </h1>
+                  </div>
+                  
+                  <ProgressBar currentStep={currentStep} />
 
                 <div className="space-y-6">
                   {currentStep === 'details' ? (
@@ -407,5 +405,6 @@ export default function CreateRidePage() {
         </main>
       </div>
     </div>
+    </ProtectedRoute>
   );
 }

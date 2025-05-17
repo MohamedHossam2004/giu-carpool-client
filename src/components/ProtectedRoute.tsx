@@ -9,12 +9,14 @@ interface ProtectedRouteProps {
   children: ReactNode;
   adminOnly?: boolean;
   driverOnly?: boolean;
+  passengerOnly?: boolean;
 }
 
 export default function ProtectedRoute({ 
   children, 
   adminOnly = false, 
-  driverOnly = false 
+  driverOnly = false,
+  passengerOnly = false, 
 }: ProtectedRouteProps) {
   const { user, isAuthenticated, loading } = useAuth();
   const router = useRouter();
@@ -39,9 +41,11 @@ export default function ProtectedRoute({
         router.push('/dashboard');
       } else if (driverOnly && !user?.isDriver && !user?.isAdmin) {
         router.push('/dashboard');
+      } else if (passengerOnly && (user?.isDriver || user?.isAdmin)) {
+        router.push('/dashboard');
       }
     }
-  }, [loading, isAuthenticated, user, adminOnly, driverOnly, router, pathname]);
+  }, [loading, isAuthenticated, user, adminOnly, driverOnly, passengerOnly, router, pathname]);
 
   if (loading) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
@@ -49,7 +53,8 @@ export default function ProtectedRoute({
 
   if (!isAuthenticated || 
       (adminOnly && !user?.isAdmin) || 
-      (driverOnly && !user?.isDriver && !user?.isAdmin)) {
+      (driverOnly && !user?.isDriver && !user?.isAdmin) ||
+      (passengerOnly && (user?.isDriver || user?.isAdmin))) {
     return null;
   }
 

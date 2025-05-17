@@ -14,7 +14,7 @@ export function Sidebar() {
   const pathname = usePathname()
   const { user } = useAuth()
   const accessToken = Cookies.get('accessToken');
-  const { data: userData } = useQuery(ME_QUERY, {
+  const { data: userData, loading: userLoading } = useQuery(ME_QUERY, {
     context: {
       headers: {
         authorization: `Bearer ${accessToken}`
@@ -45,7 +45,10 @@ export function Sidebar() {
       </div>
 
       <nav className="flex flex-col gap-1 px-2">
-        {user?.isAdmin ? (
+        {
+        userLoading ? (
+          <div className="h-4 w-full bg-white"></div>
+        ) : user?.isAdmin ? (
           <>
             <Link
               href="/dashboard/admin/pendingDrivers"
@@ -114,18 +117,20 @@ export function Sidebar() {
               <span>Home</span>
             </Link>
 
-            <Link
-              href="/find-ride"
-              className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium",
-                pathname === "/find-ride"
-                  ? "bg-gray-100 text-black"
-                  : "text-black hover:bg-gray-50",
-              )}
-            >
-              <Search className="h-5 w-5" />
-              <span>Find a Ride</span>
-            </Link>
+            {!userLoading && !user?.isAdmin && !userData?.me?.isDriver && ( // This condition is redundant now, but keeping for clarity
+              <Link
+                href="/find-ride"
+                className={cn(
+                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium",
+                  pathname === "/find-ride"
+                    ? "bg-gray-100 text-black"
+                    : "text-black hover:bg-gray-50",
+                )}
+              >
+                <Search className="h-5 w-5" />
+                <span>Find a Ride</span>
+              </Link>
+            )}
 
             {userData?.me?.isDriver && (
               <Link
