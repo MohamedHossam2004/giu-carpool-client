@@ -95,7 +95,7 @@ interface Ride {
 }
 
 function RideCard({ ride, isDriverView = false }: { ride: Ride; isDriverView?: boolean }) {
-  const date = new Date(parseInt(ride.departureTime));
+  const date = new Date(ride.departureTime);
   const formattedDate = format(date, 'dd/MM/yyyy, HH:mm');
 
   return (
@@ -246,17 +246,6 @@ export default function DashboardPage() {
     <div className="max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-
-        {userData?.me?.isDriver && (
-          <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
-            <button
-              className={`px-3 py-1.5 rounded-md text-sm font-medium ${isDriver ? 'bg-white shadow-sm text-black' : 'text-gray-600'}`}
-              onClick={() => router.push('/dashboard')}
-            >
-              Driver View
-            </button>
-          </div>
-        )}
       </div>
 
       <Tabs defaultValue="upcoming" className="w-full" onValueChange={(value) => setActiveTab(value as "upcoming" | "active")}>

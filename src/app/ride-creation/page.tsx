@@ -75,14 +75,13 @@ export default function CreateRidePage() {
       return;
     }
     fetchAreas();
-    checkRideLimit();
   }, [data, authError, router, accessToken]);
 
   const checkRideLimit = () => {
-    if (!data?.me?.isDriver) return;
+    if (!data?.me?.isDriver) return true;
 
     const cachedRides = localStorage.getItem('driverRides');
-    if (!cachedRides) return;
+    if (!cachedRides) return true;
 
     const rides = JSON.parse(cachedRides);
     const toGIURides = rides.filter((ride: any) => ride.toGIU);
@@ -90,20 +89,19 @@ export default function CreateRidePage() {
 
     if (toGIURides.length >= 1 && toGIU) {
       setError('You already have a ride to GIU. You can only create one ride to GIU at a time.');
-      router.push('/dashboard');
-      return;
+      return false;
     }
 
     if (fromGIURides.length >= 1 && !toGIU) {
       setError('You already have a ride from GIU. You can only create one ride from GIU at a time.');
-      router.push('/dashboard');
-      return;
+      return false;
     }
+
+    return true;
   };
 
   const handleToGIUChange = (value: boolean) => {
     setToGIU(value);
-    checkRideLimit();
   };
 
   const fetchAreas = async () => {
@@ -229,12 +227,21 @@ export default function CreateRidePage() {
       setIsSubmitting(true);
       setError(null);
       
+      // Check ride limit before creating
+      if (!checkRideLimit()) {
+        setIsSubmitting(false);
+        return;
+      }
+      
       // Get current user ID from data
       const driverId = data?.me?.id;
       
       if (!driverId) {
         throw new Error('User ID not found. Please try logging in again.');
       }
+
+      // Convert departure time to timestamp for Prisma
+      const departureTimestamp = new Date(departureTime).toISOString();
       
       console.log('Creating ride with params:', {
         areaId: parseInt(selectedAreaId),
@@ -245,7 +252,7 @@ export default function CreateRidePage() {
         })),
         toGIU,
         girlsOnly,
-        departureTime
+        departureTime: departureTimestamp
       });
       
       await createRide({
@@ -258,7 +265,7 @@ export default function CreateRidePage() {
           })),
           toGIU,
           girlsOnly,
-          departureTime,
+          departureTime: departureTimestamp,
         }
       });
     } catch (error) {
