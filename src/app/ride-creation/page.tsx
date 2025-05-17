@@ -85,13 +85,13 @@ export default function CreateRidePage() {
 
     const rides = JSON.parse(cachedRides);
     const selectedDate = new Date(departureTime);
+    const selectedDay = Math.floor(selectedDate.getTime() / (1000 * 60 * 60 * 24));
     
-    // Filter rides for the same day, handling timezone conversion
+    // Filter rides for the same day number
     const sameDayRides = rides.filter((ride: any) => {
       const rideDate = new Date(parseInt(ride.departureTime));
-      const rideDateStr = rideDate.toLocaleDateString();
-      const selectedDateStr = selectedDate.toLocaleDateString();
-      return rideDateStr === selectedDateStr;
+      const rideDay = Math.floor(rideDate.getTime() / (1000 * 60 * 60 * 24));
+      return rideDay === selectedDay;
     });
 
     const toGIURides = sameDayRides.filter((ride: any) => ride.toGIU);
