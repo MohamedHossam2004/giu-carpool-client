@@ -7,7 +7,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 
 // Add CSS for custom markers
 const customMarkerStyle = `
-  .custom-marker {
+  .map-pin-marker {
     background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2238%22%20height%3D%2238%22%20viewBox%3D%220%200%2038%2038%22%3E%3Cpath%20fill%3D%22%23EA4335%22%20stroke-width%3D%221.5%22%20d%3D%22M19%200C10.178%200%203%207.178%203%2016.001%203%2024.823%2019%2038%2019%2038s16-13.177%2016-21.999C35%207.178%2027.822%200%2019%200zm0%2024a8%208%200%20110-16%208%208%200%20010%2016z%22%2F%3E%3C%2Fsvg%3E');
     background-size: cover;
     width: 30px;
@@ -18,19 +18,13 @@ const customMarkerStyle = `
     cursor: pointer;
     /* box-shadow: 0 2px 4px rgba(0,0,0,0.3); */
   }
-  .custom-marker.giu {
+  .map-pin-marker.giu {
     background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2238%22%20height%3D%2238%22%20viewBox%3D%220%200%2038%2038%22%3E%3Cpath%20fill%3D%22%234285F4%22%20stroke-width%3D%221.5%22%20d%3D%22M19%200C10.178%200%203%207.178%203%2016.001%203%2024.823%2019%2038%2019%2038s16-13.177%2016-21.999C35%207.178%2027.822%200%2019%200zm0%2024a8%208%200%20110-16%208%208%200%20010%2016z%22%2F%3E%3C%2Fsvg%3E');
   }
   /* Removed .unselected style as it's no longer needed */
 `;
 
-// Inject styles into the head
-if (typeof window !== 'undefined') {
-  const styleSheet = document.createElement("style");
-  styleSheet.type = "text/css";
-  styleSheet.innerText = customMarkerStyle;
-  document.head.appendChild(styleSheet);
-}
+
 
 // Import mapboxgl dynamically to avoid SSR issues
 let mapboxgl: any = null;
@@ -90,6 +84,22 @@ const CreateRideMap: React.FC<CreateRideMapProps> = ({
   
   // GIU coordinates (fixed in frontend)
   const giuCoordinates: [number, number] = [31.698972, 30.003222]; // [lng, lat] format for Mapbox
+
+  // Inject styles into the head and clean up on unmount
+  useEffect(() => {
+    let styleSheetElement: HTMLStyleElement | null = null;
+    if (typeof window !== 'undefined') {
+      styleSheetElement = document.createElement("style");
+      styleSheetElement.type = "text/css";
+      styleSheetElement.innerText = customMarkerStyle; // customMarkerStyle is defined in the outer scope
+      document.head.appendChild(styleSheetElement);
+    }
+    return () => {
+      if (styleSheetElement && document.head.contains(styleSheetElement)) {
+        document.head.removeChild(styleSheetElement);
+      }
+    };
+  }, []);
   
 
   // Initialize map when component mounts
@@ -128,7 +138,7 @@ const CreateRideMap: React.FC<CreateRideMapProps> = ({
       
       // Create custom element for GIU marker
       const el = document.createElement('div');
-      el.className = 'custom-marker giu';
+      el.className = 'map-pin-marker giu';
 
       // Add GIU marker
       const giuMarker = new mapboxgl.Marker(el)
@@ -227,7 +237,7 @@ const CreateRideMap: React.FC<CreateRideMapProps> = ({
       
       // Create custom element for meeting point marker
       const el = document.createElement('div');
-      el.className = 'custom-marker';
+      el.className = 'map-pin-marker';
   
       const marker = new mapboxgl.Marker(el)
         .setLngLat([point.longitude, point.latitude])

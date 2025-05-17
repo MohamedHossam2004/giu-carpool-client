@@ -23,6 +23,9 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { MapPin, Calendar, Clock, Users, AlertCircle } from 'lucide-react';
+import RideMap from './RideMap';
+
 
 interface MeetingPoint {
   id: string;
@@ -100,85 +103,138 @@ export default function RideDetails({ params }: RideDetailsProps) {
   const formattedDate = new Date(ride.departureTime).toLocaleString();
 
   return (
-    <div className="p-8 max-w-5xl mx-auto">
-      <h1 className="text-3xl font-bold mb-4">🚗 Ride Details</h1>
-
-      <div className="bg-white rounded-lg shadow-md p-5 mb-6">
-        <p><strong>Status:</strong> {ride.status}</p>
-        <p><strong>Departure:</strong> {formattedDate}</p>
-        <p><strong>Area:</strong> {ride.area.name}</p>
-      </div>
-
-      <div className="mb-8 space-y-4">
-        <label className="block text-sm font-medium text-gray-700">Update Ride Status</label>
-        <div className="flex gap-3 items-center">
-          <Select onValueChange={setNewStatus} value={newStatus}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Select Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="IN_PROGRESS">IN_PROGRESS</SelectItem>
-              <SelectItem value="CANCELLED">CANCELLED</SelectItem>
-              <SelectItem value="COMPLETED">COMPLETED</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button
-                onClick={handleStatusChange}
-                disabled={!newStatus || updating}
-              >
-                {updating ? 'Updating...' : 'Update'}
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Confirm Status Update</DialogTitle>
-                <DialogDescription>
-                  Are you sure you want to update the ride status to <span className="font-bold">{newStatus}</span>?
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
-                <Button variant="default" onClick={confirmUpdate}>Confirm</Button>
-                <DialogClose asChild>
-                  <Button variant="ghost">Cancel</Button>
-                </DialogClose>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+    <div className="max-w-6xl mx-auto px-6 py-10 space-y-8 bg-gray-50 min-h-screen">
+      {/* Header with status badge */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <h1 className="text-3xl font-bold text-gray-900">🚗 Ride Details</h1>
+        <div className={`px-4 py-2 rounded-full text-sm font-medium ${ride.status === 'IN_PROGRESS' ? 'bg-green-100 text-green-600' : ride.status === 'CANCELLED' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
+          {ride.status}
         </div>
       </div>
 
-      <h2 className="text-xl font-semibold mb-3">📍 Meeting Points</h2>
-      <ul className="space-y-3 mb-6">
-        {ride.meetingPoints.map((mp) => (
-          <li
-            key={mp.id}
-            className="border border-gray-200 p-4 rounded-lg bg-gray-50 shadow-sm"
-          >
-            <p><strong>Point:</strong> {mp.meetingPoint.name}</p>
-            <p><strong>Price:</strong> EGP {mp.price}</p>
-          </li>
-        ))}
-      </ul>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Left column - Ride info and controls */}
+        <div className="space-y-8">
+          {/* Ride Info Card */}
+          <div className="bg-white shadow-md rounded-xl p-6 border border-gray-100 space-y-4">
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">Ride Information</h2>
+            
+            <div className="flex items-center gap-3 text-gray-700">
+              <Calendar className="w-5 h-5 text-[#F28C28]" />
+              <span><strong>Departure:</strong> {formattedDate}</span>
+            </div>
+            
+            <div className="flex items-center gap-3 text-gray-700">
+              <MapPin className="w-5 h-5 text-[#F28C28]" />
+              <span><strong>Area:</strong> {ride.area.name}</span>
+            </div>
+            
+            <div className="flex items-center gap-3 text-gray-700">
+              <Users className="w-5 h-5 text-[#F28C28]" />
+              <span><strong>Passengers:</strong> {ride.passengers.length}</span>
+            </div>
+            
+            {ride.girlsOnly && (
+              <div className="flex items-center gap-3 text-pink-600">
+                <AlertCircle className="w-5 h-5" />
+                <span><strong>Girls Only Ride</strong></span>
+              </div>
+            )}
+            
+            <div className="flex items-center gap-3 text-gray-700">
+              <Clock className="w-5 h-5 text-[#F28C28]" />
+              <span><strong>Direction:</strong> {ride.toGIU ? 'To GIU' : 'From GIU'}</span>
+            </div>
+          </div>
 
-      <h2 className="text-xl font-semibold mb-2">👥 Passengers</h2>
-      <ul className="space-y-3">
-        {ride.passengers.length === 0 ? (
-          <p className="text-gray-500">No passengers yet.</p>
-        ) : (
-          ride.passengers.map((p, idx) => (
-            <li
-              key={idx}
-              className="border border-gray-200 p-4 rounded-lg bg-white shadow-sm"
-            >
-              <p><strong>Name:</strong> {p.passengerName}</p>
-         
-            </li>
-          ))
-        )}
-      </ul>
+          {/* Status Update Card */}
+          <div className="bg-white shadow-md rounded-xl p-6 border border-gray-100 space-y-4">
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">Update Ride Status</h2>
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+              <Select onValueChange={setNewStatus} value={newStatus}>
+                <SelectTrigger className="w-full sm:w-[200px]">
+                  <SelectValue placeholder="Select Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="IN_PROGRESS">IN_PROGRESS</SelectItem>
+                  <SelectItem value="CANCELLED">CANCELLED</SelectItem>
+                  <SelectItem value="COMPLETED">COMPLETED</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    onClick={handleStatusChange}
+                    disabled={!newStatus || updating}
+                    className="bg-[#F28C28] hover:bg-[#e57c1d] text-white w-full sm:w-auto"
+                  >
+                    {updating ? 'Updating...' : 'Update Status'}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Confirm Status Update</DialogTitle>
+                    <DialogDescription>
+                      Are you sure you want to update the ride status to <span className="font-bold">{newStatus}</span>?
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <Button variant="default" onClick={confirmUpdate} className="bg-[#F28C28] hover:bg-[#e57c1d] text-white">Confirm</Button>
+                    <DialogClose asChild>
+                      <Button variant="ghost">Cancel</Button>
+                    </DialogClose>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
+
+          {/* Meeting Points Card */}
+          <div className="bg-white shadow-md rounded-xl p-6 border border-gray-100">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">📍 Meeting Points</h2>
+            <ul className="space-y-4">
+              {ride.meetingPoints.map((mp) => (
+                <li
+                  key={mp.id}
+                  className="border border-gray-200 p-4 rounded-lg bg-gray-50 shadow-sm hover:shadow-md transition-all"
+                >
+                  <div className="flex justify-between items-center">
+                    <p className="font-medium text-gray-800">{mp.meetingPoint.name}</p>
+                    <p className="text-[#F28C28] font-bold">EGP {mp.price}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* Right column - Map and Passengers */}
+        <div className="space-y-8">
+          {/* Map Card */}
+          <RideMap ride={ride} />
+
+          {/* Passengers Card */}
+          <div className="bg-white shadow-md rounded-xl p-6 border border-gray-100">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">👥 Passengers</h2>
+            {ride.passengers.length === 0 ? (
+              <p className="text-gray-500 italic">No passengers have joined this ride yet.</p>
+            ) : (
+              <ul className="space-y-3">
+                {ride.passengers.map((p, idx) => (
+                  <li
+                    key={idx}
+                    className="border border-gray-200 p-4 rounded-lg bg-gray-50 shadow-sm hover:shadow-md transition-all"
+                  >
+                    <p className="font-medium text-gray-800">{p.passengerName}</p>
+                    <p className="text-sm text-gray-500">Joined: {new Date(p.createdAt).toLocaleDateString()}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

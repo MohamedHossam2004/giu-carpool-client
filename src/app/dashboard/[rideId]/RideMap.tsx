@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { MeetingPoint } from '@/types/area';
 
 // Add CSS for custom markers
 const customMarkerStyle = `
@@ -289,9 +288,9 @@ const RideMap: React.FC<RideMapProps> = ({ ride }) => {
   };
 
   return (
-    <div className="bg-white shadow-md rounded-xl p-6 border border-gray-100 h-[400px]">
+    <div className="bg-white shadow-md rounded-xl p-6 border border-gray-100 h-[450px]">
       <h2 className="text-xl font-semibold text-gray-800 mb-3">🗺️ Ride Route</h2>
-      <div ref={mapContainer} className="h-[320px] w-full rounded-lg overflow-hidden" />
+      <div ref={mapContainer} className="h-[370px] w-full rounded-lg overflow-hidden" />
     </div>
   );
 };
