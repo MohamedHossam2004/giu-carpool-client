@@ -222,9 +222,14 @@ interface RideCardProps {
 }
 
 function RideCard({ id, name, car, departureTime, availableSeats, avatarSrc, meetingPoints, driverId }: RideCardProps) {
-  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
-  const [meetingPointsDialogOpen, setMeetingPointsDialogOpen] = useState(false)
-  const [selectedMeetingPoint, setSelectedMeetingPoint] = useState<MeetingPoint | null>(null)
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [meetingPointsDialogOpen, setMeetingPointsDialogOpen] = useState(false);
+  const [selectedMeetingPoint, setSelectedMeetingPoint] = useState<MeetingPoint | null>(null);
+  const router = useRouter();
+
+  const handleViewRideDetails = () => {
+    router.push(`/find-ride/${id}`);
+  };
 
   const query = `mutation CreateBooking($rideId: Int!, $meetingPointId: Int!) {
                     createBooking(ride_id: $rideId, meeting_point_id: $meetingPointId) {
@@ -306,7 +311,7 @@ function RideCard({ id, name, car, departureTime, availableSeats, avatarSrc, mee
   };
 
   return (
-    <Card className="overflow-hidden border">
+    <Card className="overflow-hidden border cursor-pointer" onClick={handleViewRideDetails}>
       <CardContent className="p-6 flex items-center gap-4">
         <div className="relative">
           <div className="w-20 h-20 rounded-full overflow-hidden bg-amber-100">
@@ -333,18 +338,12 @@ function RideCard({ id, name, car, departureTime, availableSeats, avatarSrc, mee
             <Button
               className="bg-amber-500 hover:bg-amber-600 text-white"
               size="sm"
-              onClick={() => setDetailsDialogOpen(true)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleViewRideDetails();
+              }}
             >
-              Rider Details
-            </Button>
-
-            <Button
-              className={`bg-amber-500 hover:bg-amber-600 text-white ${selectedMeetingPoint ? "opacity-50" : ""}`}
-              size="sm"
-              onClick={() => setMeetingPointsDialogOpen(true)}
-              disabled={!!selectedMeetingPoint}
-            >
-              {selectedMeetingPoint ? "Booked" : "Join Ride"}
+              View Details
             </Button>
           </div>
 

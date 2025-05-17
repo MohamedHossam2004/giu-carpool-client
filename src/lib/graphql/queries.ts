@@ -307,6 +307,22 @@ export const UPDATE_RIDE_STATUS = gql`
 `;
 
 // REMOVE_PASSENGER Mutation
+export const GET_DRIVER_REVIEWS_LIST = gql`
+  query GetDriverReviewsList($driverId: ID!) {
+    getDriverReviews(driverId: $driverId) {
+      id
+      rating
+      review
+      createdAt
+      # If rider information is available and needed, add here e.g.:
+      # rider {
+      #   firstName
+      #   lastName
+      # }
+    }
+  }
+`;
+
 export const REMOVE_PASSENGER = gql`
   mutation RemovePassenger($rideId: Int!) {
     removePassenger(rideId: $rideId) {
