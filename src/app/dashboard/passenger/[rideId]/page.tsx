@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, MapPin, CalendarDays } from 'lucide-react';
+import RideMap from './RideMap';
 
 interface MeetingPoint {
   id: string;
@@ -87,7 +88,6 @@ export default function RideDetails({ params }: RideDetailsProps) {
     variables: { id: rideIdNumber },
     client: ridesClient,
   });
-  console.log(data)
   const [cancelling, setCancelling] = useState(false); // Renamed from removing
   const [booking, setBooking] = useState<Booking | null>(null);
   const userId = Cookies.get('user') ? JSON.parse(Cookies.get('user')!).id : null;
@@ -217,6 +217,9 @@ export default function RideDetails({ params }: RideDetailsProps) {
           </span>
         </div>
       </div>
+
+      {/* Map */}
+      <RideMap ride={ride} />
 
       {/* Meeting Points */}
       <div>
