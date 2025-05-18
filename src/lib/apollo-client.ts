@@ -32,6 +32,10 @@ const ridesClient = new ApolloClient({
 // Create client for user service
 const userHttpLink = createHttpLink({
   uri: process.env.NEXT_PUBLIC_USER_URI || 'https://3.84.209.34/graphql',
+  fetchOptions: {
+    // @ts-ignore - This is a development-only setting
+    rejectUnauthorized: process.env.NODE_ENV === 'production',
+  },
 });
 
 const userClient = new ApolloClient({
