@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Search, Car, Menu, Users, Star, CreditCard, User, Settings } from "lucide-react"
+import { Home, Search, Car, Menu, Users, Star, CreditCard, User, Settings, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
 import { useAuth } from "@/contexts/AuthContext"
@@ -132,18 +132,48 @@ export function Sidebar() {
               </Link>
             )}
 
-            {userData?.me?.isDriver && (
+            {!userLoading && userData?.me?.isDriver && (
+              <>
+                <Link
+                  href="/ride-creation"
+                  className={cn(
+                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium",
+                    pathname === "/ride-creation"
+                      ? "bg-gray-100 text-black"
+                      : "text-black hover:bg-gray-50",
+                  )}
+                >
+                  <Car className="h-5 w-5" />
+                  <span>Ride Creation</span>
+                </Link>
+
+                <Link
+                  href="/dashboard/driver/previous-rides"
+                  className={cn(
+                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium",
+                    pathname === "/dashboard/driver/previous-rides"
+                      ? "bg-gray-100 text-black"
+                      : "text-black hover:bg-gray-50",
+                  )}
+                >
+                  <Clock className="h-5 w-5" />
+                  <span>Previous Rides</span>
+                </Link>
+              </>
+            )}
+
+            {!userLoading && !userData?.me?.isDriver && (
               <Link
-                href="/ride-creation"
+                href="/dashboard/passenger/previous-rides"
                 className={cn(
                   "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium",
-                  pathname === "/ride-creation"
+                  pathname === "/dashboard/passenger/previous-rides"
                     ? "bg-gray-100 text-black"
                     : "text-black hover:bg-gray-50",
                 )}
               >
-                <Car className="h-5 w-5" />
-                <span>Ride Creation</span>
+                <Clock className="h-5 w-5" />
+                <span>Previous Rides</span>
               </Link>
             )}
 
