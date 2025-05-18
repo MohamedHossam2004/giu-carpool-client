@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Search, Car, Menu, Users, Star, CreditCard, User, Settings, Clock } from "lucide-react"
+import { Home, Search, Car, Menu, Users, Star, CreditCard, User, Settings, Clock, MapPin } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
 import { useAuth } from "@/contexts/AuthContext"
@@ -100,6 +100,19 @@ export function Sidebar() {
             >
               <Car className="h-5 w-5" />
               <span>Rides</span>
+            </Link>
+
+            <Link
+              href="/areas/add"
+              className={cn(
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium",
+                pathname === "/areas/add"
+                  ? "bg-gray-100 text-black"
+                  : "text-black hover:bg-gray-50",
+              )}
+            >
+              <MapPin className="h-5 w-5" />
+              <span>Create Area</span>
             </Link>
           </>
         ) : (
