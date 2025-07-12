@@ -1,6 +1,6 @@
 # GIU Carpool Client
 
-This is the client application for the GIU Carpool system, built with Next.js and TypeScript.
+This is the client application for the GIU Carpool system, built on microservices with Next.js, TypeScript, and Kafka for inter-service communication.
 
 ## Getting Started
 
